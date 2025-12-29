@@ -2,6 +2,7 @@ import React from "react";
 import { Toaster } from "sonner";
 
 import { ThemeProvider } from "@/components/theme/theme-provider";
+import { QueryProvider } from "@/components/query-provider";
 
 export const Providers = ({ children }: { children: React.ReactNode }) => {
   return (
@@ -13,7 +14,7 @@ export const Providers = ({ children }: { children: React.ReactNode }) => {
         disableTransitionOnChange
       >
         <Toaster richColors closeButton />
-        {children}
+        <QueryProvider>{children}</QueryProvider>
       </ThemeProvider>
     </div>
   );
