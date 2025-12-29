@@ -9,9 +9,44 @@ import {
   ResponsiveDialogTitle,
   ResponsiveDialogTrigger,
 } from "@/components/ui/revola";
-import { GoogleIcon } from "./google-icon";
+import { GoogleIcon } from "@/components/auth/google-icon";
+import { Spinner } from "@/components/ui/spinner";
+import { authClient } from "@/lib/auth-client";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 
 export function SignInForm({ title = "Sign In" }: { title?: string }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const { data: session, error } = authClient.useSession();
+  const router = useRouter();
+
+  const signInWithGoogle = async () => {
+    try {
+      setIsLoading(true);
+      await authClient.signIn.social({
+        provider: "google",
+        callbackURL: "/dashboard",
+      });
+    } catch (error) {
+      const err = error as Error;
+      console.error("Sign in error:", err.message);
+      toast.error(err.message || "Unable to sign in. Try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  if (error) {
+    toast.error(error.message || "Login failed. Please try again.");
+  }
+
+  if (session) {
+    return (
+      <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>
+    );
+  }
+
   return (
     <ResponsiveDialog>
       <ResponsiveDialogTrigger asChild>
@@ -20,15 +55,29 @@ export function SignInForm({ title = "Sign In" }: { title?: string }) {
       <ResponsiveDialogContent className="sm:max-w-sm">
         <div className="space-y-4 overflow-y-auto">
           <ResponsiveDialogHeader className="sm:text-center">
-            <ResponsiveDialogTitle>Sign in</ResponsiveDialogTitle>
+            <ResponsiveDialogTitle>Sign In</ResponsiveDialogTitle>
             <ResponsiveDialogDescription>
               to continue to platform
             </ResponsiveDialogDescription>
           </ResponsiveDialogHeader>
-
-          <Button variant="outline" className="w-full" type="button">
-            <GoogleIcon />
-            Continue with Google
+          <Button
+            variant="outline"
+            className="w-full"
+            type="button"
+            onClick={signInWithGoogle}
+            disabled={isLoading}
+          >
+            {isLoading ? (
+              <>
+                <Spinner />
+                Signing in...
+              </>
+            ) : (
+              <>
+                <GoogleIcon />
+                Continue with Google
+              </>
+            )}
           </Button>
 
           <p className="text-muted-foreground text-center text-xs">
