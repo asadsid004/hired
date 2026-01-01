@@ -13,5 +13,20 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
         },
     },
+    user: {
+        additionalFields: {
+            onboardingCompleted: {
+                type: "boolean",
+                defaultValue: false,
+                required: false,
+            }
+        }
+    },
+    session: {
+        cookieCache: {
+            enabled: true,
+            maxAge: 60,
+        }
+    },
     plugins: [nextCookies()]
 });
