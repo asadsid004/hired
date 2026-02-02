@@ -2,6 +2,7 @@ import { OnboardingData } from "./onboarding.schema";
 import { db } from "@/db/drizzle";
 import { jobPreferences, User, user as users } from "@/db/schema";
 import { eq } from "drizzle-orm";
+import { resumeService } from "../resume/resume.service";
 
 export const onboardingService = {
     async submit(user: User, data: OnboardingData) {
@@ -16,7 +17,7 @@ export const onboardingService = {
                     location: Array.isArray(data.location) ? data.location : [data.location],
                 })
 
-                // TODO: Handle resume upload and processing
+                await resumeService.uploadAndSave(data.resume, user.id, tx);
 
                 await tx.update(users).set({ onboardingCompleted: true }).where(eq(users.id, user.id));
             })
