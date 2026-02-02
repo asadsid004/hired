@@ -13,6 +13,8 @@
     "db:studio": "drizzle-kit studio"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.980.0",
+    "@aws-sdk/s3-request-presigner": "^3.980.0",
     "@elysiajs/eden": "^1.4.6",
     "@hugeicons/core-free-icons": "^3.1.1",
     "@hugeicons/react": "^1.1.4",
@@ -25,6 +27,7 @@
     "clsx": "^2.1.1",
     "drizzle-orm": "^0.45.1",
     "elysia": "^1.4.19",
+    "nanoid": "^5.1.6",
     "next": "16.1.1",
     "next-themes": "^0.4.6",
     "radix-ui": "^1.4.3",
