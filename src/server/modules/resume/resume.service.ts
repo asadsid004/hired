@@ -2,14 +2,15 @@ import { db } from '@/db/drizzle';
 import { resume, ResumeInsert } from '@/db/schema';
 import { TX } from '@/db/types';
 import { deleteFile, uploadFile } from '@/lib/s3';
-import { extractText, getDocumentProxy } from 'unpdf'
+import { extractLinks, extractText, getDocumentProxy } from 'unpdf'
 
 export const resumeService = {
     async parse(file: File) {
         const pdf = await getDocumentProxy(new Uint8Array(await file.arrayBuffer()));
         const { text } = await extractText(pdf, { mergePages: true })
+        const { links } = await extractLinks(pdf)
 
-        return text;
+        return { text, links };
     },
     async create({ data, tx }: { data: ResumeInsert, tx?: TX }) {
         const values = {
@@ -17,6 +18,7 @@ export const resumeService = {
             fileName: data.fileName,
             key: data.key,
             text: data.text,
+            links: data.links,
         };
 
         if (tx) {
@@ -26,7 +28,7 @@ export const resumeService = {
         return await db.insert(resume).values(values);
     },
     async uploadAndSave(file: File, userId: string, tx?: TX) {
-        const text = await this.parse(file);
+        const { text, links } = await this.parse(file);
 
         const res = await uploadFile(file);
 
@@ -39,6 +41,7 @@ export const resumeService = {
             fileName: file.name,
             key: res.key!,
             text,
+            links,
         };
 
         try {

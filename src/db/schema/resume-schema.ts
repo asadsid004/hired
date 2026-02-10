@@ -10,6 +10,7 @@ export const resume = pgTable("resume", {
     fileName: text("file_name").notNull(),
     key: text("key").notNull(),
     text: text("text").notNull(),
+    links: text("links").array(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
