@@ -1,5 +1,7 @@
-import { pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
+
+import { ResumeProfile } from "@/lib/ai/schemas/resume.schema";
 
 export const resume = pgTable("resume", {
     id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -11,6 +13,7 @@ export const resume = pgTable("resume", {
     key: text("key").notNull(),
     text: text("text").notNull(),
     links: text("links").array(),
+    data: jsonb("data").$type<ResumeProfile>(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()

@@ -1,5 +1,7 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, jsonb } from "drizzle-orm/pg-core";
+
+import { ResumeProfile } from "@/lib/ai/schemas/resume.schema";
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -8,6 +10,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  profile: jsonb("profile").$type<ResumeProfile>(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at")
     .defaultNow()

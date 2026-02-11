@@ -3,6 +3,12 @@ import { resume, ResumeInsert } from '@/db/schema';
 import { TX } from '@/db/types';
 import { deleteFile, uploadFile } from '@/lib/s3';
 import { extractLinks, extractText, getDocumentProxy } from 'unpdf'
+import { generateText, Output } from 'ai';
+import { model } from '@/lib/ai';
+import { RESUME_EXTRACTION_SYSTEM_PROMPT } from '@/lib/ai/prompts/system/resume.system.prompt';
+import { buildResumeExtractionPrompt } from '@/lib/ai/prompts/tasks/resume.task.prompt';
+import { ResumeProfileSchema } from '@/lib/ai/schemas/resume.schema';
+import { eq } from 'drizzle-orm';
 
 export const resumeService = {
     async parse(file: File) {
@@ -50,5 +56,22 @@ export const resumeService = {
             await deleteFile(res.key!);
             throw err as Error;
         }
+    },
+    async updateResume(id: string, data: Partial<ResumeInsert>) {
+        const [updated] = await db.update(resume).set(data).where(eq(resume.id, id)).returning();
+
+        return updated;
+    },
+    async structuredOutput(id: string, text: string, links: string[]) {
+        const { output } = await generateText({
+            model: model,
+            system: RESUME_EXTRACTION_SYSTEM_PROMPT,
+            prompt: buildResumeExtractionPrompt({ text, links }),
+            output: Output.object({
+                schema: ResumeProfileSchema
+            })
+        })
+
+        return output;
     },
 }
