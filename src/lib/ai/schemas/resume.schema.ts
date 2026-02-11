@@ -99,7 +99,7 @@ export type ResumeProfile = z.infer<typeof ResumeProfileSchema>;
 export const ATSAnalysisSchema = z.object({
     score: z.number().min(0).max(100),
     issues: z.array(z.object({
-        category: z.enum(['formatting', 'layout', 'fonts', 'length', 'keywords']),
+        category: z.enum(['formatting', 'structure', 'length', 'readability']),
         severity: z.enum(['critical', 'warning', 'info']),
         message: z.string(),
         suggestion: z.string(),
@@ -109,9 +109,13 @@ export const ATSAnalysisSchema = z.object({
 
 export const SectionAnalysisSchema = z.object({
     score: z.number().min(0).max(100),
-    present: z.array(z.string()),
+    present: z.array(z.object({
+        name: z.string(),
+        quality: z.enum(['excellent', 'good', 'average', 'poor']),
+        feedback: z.string(),
+    })),
     missing: z.array(z.object({
-        section: z.string(),
+        name: z.string(),
         importance: z.enum(['critical', 'recommended', 'optional']),
         reason: z.string(),
     })),
@@ -138,18 +142,14 @@ export const SemanticAnalysisSchema = z.object({
         suggested: z.string(),
         reason: z.string(),
     })),
+    keywordGaps: z.array(z.string()),
 });
 
 export const ResumeAnalysisSchema = z.object({
     ats: ATSAnalysisSchema,
     section: SectionAnalysisSchema,
     semantic: SemanticAnalysisSchema,
-    overall: z.object({
-        score: z.number().min(0).max(100),
-        summary: z.string(),
-        topIssues: z.array(z.string()).max(5),
-        topStrengths: z.array(z.string()).max(3),
-    }),
+    overall: z.number().min(0).max(100),
 });
 
 export type ResumeAnalysis = z.infer<typeof ResumeAnalysisSchema>;
