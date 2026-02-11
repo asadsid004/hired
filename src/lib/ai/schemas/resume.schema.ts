@@ -95,3 +95,61 @@ export const ResumeProfileSchema = z.object({
 });
 
 export type ResumeProfile = z.infer<typeof ResumeProfileSchema>;
+
+export const ATSAnalysisSchema = z.object({
+    score: z.number().min(0).max(100),
+    issues: z.array(z.object({
+        category: z.enum(['formatting', 'layout', 'fonts', 'length', 'keywords']),
+        severity: z.enum(['critical', 'warning', 'info']),
+        message: z.string(),
+        suggestion: z.string(),
+    })),
+    strengths: z.array(z.string()),
+});
+
+export const SectionAnalysisSchema = z.object({
+    score: z.number().min(0).max(100),
+    present: z.array(z.string()),
+    missing: z.array(z.object({
+        section: z.string(),
+        importance: z.enum(['critical', 'recommended', 'optional']),
+        reason: z.string(),
+    })),
+    suggestions: z.array(z.string()),
+});
+
+export const SemanticAnalysisSchema = z.object({
+    score: z.number().min(0).max(100),
+    clarity: z.object({
+        score: z.number().min(0).max(100),
+        feedback: z.string(),
+    }),
+    impact: z.object({
+        score: z.number().min(0).max(100),
+        feedback: z.string(),
+    }),
+    relevance: z.object({
+        score: z.number().min(0).max(100),
+        feedback: z.string(),
+    }),
+    improvements: z.array(z.object({
+        section: z.string(),
+        current: z.string(),
+        suggested: z.string(),
+        reason: z.string(),
+    })),
+});
+
+export const ResumeAnalysisSchema = z.object({
+    ats: ATSAnalysisSchema,
+    section: SectionAnalysisSchema,
+    semantic: SemanticAnalysisSchema,
+    overall: z.object({
+        score: z.number().min(0).max(100),
+        summary: z.string(),
+        topIssues: z.array(z.string()).max(5),
+        topStrengths: z.array(z.string()).max(3),
+    }),
+});
+
+export type ResumeAnalysis = z.infer<typeof ResumeAnalysisSchema>;
