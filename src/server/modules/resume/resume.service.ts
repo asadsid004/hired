@@ -62,7 +62,7 @@ export const resumeService = {
 
         return updated;
     },
-    async structuredOutput(id: string, text: string, links: string[]) {
+    async structuredOutput(text: string, links: string[]) {
         const { output } = await generateText({
             model: getModel(),
             system: RESUME_EXTRACTION_SYSTEM_PROMPT,
@@ -74,7 +74,7 @@ export const resumeService = {
 
         return output;
     },
-    async atsAnalysis(file: File) {
+    async atsAnalysis(fileBuffer: ArrayBuffer) {
         const { output } = await generateText({
             model: getModel(),
             system: ATS_ANALYSIS_SYSTEM_PROMPT,
@@ -87,7 +87,7 @@ export const resumeService = {
                     },
                     {
                         type: "file",
-                        data: new Uint8Array(await file.arrayBuffer()),
+                        data: new Uint8Array(fileBuffer),
                         mediaType: "application/pdf"
                     }
                 ],
@@ -111,7 +111,7 @@ export const resumeService = {
 
         return output;
     },
-    async semanticAnalysis(text: string, jobPreferences: JobPreference) {
+    async semanticAnalysis(text: string, jobPreferences: Omit<JobPreference, "id" | "userId" | "createdAt" | "updatedAt">) {
         const { output } = await generateText({
             model: getModel(),
             system: SEMANTIC_ANALYSIS_SYSTEM_PROMPT,

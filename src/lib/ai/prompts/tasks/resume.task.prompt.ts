@@ -9,7 +9,7 @@ export function buildResumeExtractionPrompt({
    text,
    links,
 }: ResumeExtractionInput): string {
-   return `Extract all information from this resume into a structured format.
+   return `Extract ALL information from this resume into a structured format. Your goal is COMPLETE extraction with ZERO loss of information.
 
 ## Resume Text:
 ${text}
@@ -17,18 +17,86 @@ ${text}
 ## Extracted Links:
 ${links.length > 0 ? links.map((link, i) => `${i + 1}. ${link}`).join('\n') : 'No links provided'}
 
-## Instructions:
-1. Parse the resume text thoroughly and extract ALL information
-2. Cross-reference the links array to identify social profiles and project URLs
-3. Categorize skills appropriately (languages, frameworks, ML/AI, DevOps, databases, tools, other)
-4. Convert all dates to YYYY-MM format
-5. Separate achievements from job descriptions (achievements show measurable impact)
-6. Use null for any genuinely missing information - do NOT fabricate data
+## CRITICAL EXTRACTION RULES:
+
+### 1. VERBATIM TEXT EXTRACTION:
+- Copy ALL text EXACTLY as written in the resume
+- Do NOT summarize, paraphrase, or rewrite anything
+- Do NOT combine multiple bullet points into one
+- Do NOT shorten or condense descriptions
+- Preserve original wording, phrasing, and terminology
+
+### 2. BULLET POINTS:
+**Each bullet point = One array item**
+- If the resume has 5 bullet points under a job, extract all 5 as separate strings
+- If the resume has 10 bullet points under a project, extract all 10 as separate strings
+- NEVER combine multiple bullets into one
+- NEVER summarize bullets
+- Keep original text word-for-word
+
+### 3. COMPLETE SKILL EXTRACTION:
+- Extract EVERY single skill mentioned in the resume
+- Check Experience, Projects, Skills section, Summary
+- Include ALL programming languages, frameworks, tools, technologies
+- Categorize into: languages, frameworks, mlAndAi, devops, databases, tools, other
+
+### 4. ALL SECTIONS:
+Extract from ALL these sections if present:
+- Personal Information (name, email, phone, location)
+- Professional Summary/Objective (complete text, not summarized)
+- Work Experience (ALL jobs with ALL details)
+- Projects (ALL projects with ALL details)
+- Education (ALL degrees/schools)
+- Skills (ALL skills mentioned)
+- Certifications (ALL certifications)
+- Achievements/Awards (ALL items)
+- Languages (ALL languages)
+- Social Links (ALL links from text and links array)
+
+### 5. CROSS-REFERENCE:
+- Match links from the provided links array to appropriate sections
+- Identify GitHub repos → add to projects if relevant
+- Identify LinkedIn → add to socials
+- Identify portfolio sites → add to socials
+
+### 6. DATE FORMATTING:
+- Convert: "Jan 2024" → "2024-01"
+- Convert: "January 2024" → "2024-01"
+- Convert: "2024" → "2024-01" (assume January if only year given)
+- For ongoing: endDate = null, isCurrent = true
+
+### 7. NULL HANDLING:
+- Use null ONLY for genuinely missing information
+- Do NOT use null if information exists but needs parsing
+- Do NOT fabricate data - if it's not there, use null
+
+## EXTRACTION CHECKLIST:
+Before submitting, verify you have:
+- [ ] Extracted EVERY bullet point individually (count them!)
+- [ ] Copied ALL descriptions exactly as written (no paraphrasing)
+- [ ] Found ALL skills mentioned anywhere in the resume
+- [ ] Extracted ALL social links from both text and links array
+- [ ] Included ALL experiences, projects, education, certifications
+- [ ] Preserved original wording throughout
+- [ ] Converted ALL dates to YYYY-MM format
+- [ ] Set isCurrent=true for ongoing roles/education
 
 ## Expected Output:
-Return a complete ResumeProfile JSON object with all available information structured according to the schema.
+Return a complete ResumeProfile JSON object with:
+- personalInfo: Complete contact information
+- socials: ALL social links found
+- summary: Complete professional summary (exact text)
+- skills: ALL skills categorized appropriately
+- experience: ALL jobs with EACH bullet point separate
+- projects: ALL projects with EACH bullet point separate
+- education: ALL degrees/schools
+- certifications: ALL certifications
+- achievements: ALL achievements as separate items
+- languages: ALL languages
 
-Parse carefully and extract everything available.`;
+**REMEMBER**: Quality = Completeness + Verbatim Text. Do NOT skip or summarize anything.
+
+Parse carefully and extract EVERYTHING available with ZERO information loss.`;
 }
 
 export function ATSAnalysisPrompt(): string {
@@ -164,7 +232,7 @@ Be specific and consider the candidate's context when evaluating sections.`;
 
 export function buildSemanticAnalysisPrompt(
    resumeText: string,
-   jobPreferences: JobPreferenceInsert
+   jobPreferences: Omit<JobPreferenceInsert, "id" | "userId" | "createdAt" | "updatedAt">
 ): string {
    return `Analyze this resume's content quality, focusing on clarity, impact, and relevance.
 

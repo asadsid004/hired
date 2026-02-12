@@ -11,6 +11,6 @@ export const models = {
 
 export type ModelPreset = keyof typeof models;
 
-export function getModel(preset: ModelPreset = 'complex'): LanguageModel {
+export function getModel(preset: ModelPreset = 'standard'): LanguageModel {
     return models[preset] as LanguageModel;
 }
