@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, timestamp, vector } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
 
 import { ResumeAnalysis, ResumeProfile } from "@/lib/ai/schemas/resume.schema";
@@ -15,6 +15,7 @@ export const resume = pgTable("resume", {
     links: text("links").array(),
     data: jsonb("data").$type<ResumeProfile>(),
     analysis: jsonb("analysis").$type<ResumeAnalysis>(),
+    embedding: vector('embedding', { dimensions: 768 }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()

@@ -91,5 +91,24 @@ export const processOnboarding = inngest.createFunction(
                 },
             });
         });
+
+        await step.run("generate-embedding", async () => {
+            const embeddingText = resumeService.prepareResumeForEmbedding(output);
+
+            const embedding = await resumeService.generateEmbedding(embeddingText);
+
+            await db.transaction(async (tx) => {
+                await tx
+                    .update(user)
+                    .set({ profileEmbedding: embedding })
+                    .where(eq(user.id, resume.userId));
+
+                await tx
+                    .update(Resume)
+                    .set({ embedding: embedding })
+                    .where(eq(Resume.id, resumeId));
+            });
+        });
+
     },
 );
