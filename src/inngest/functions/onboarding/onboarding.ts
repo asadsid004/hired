@@ -9,6 +9,7 @@ import {
 import { inngest } from "@/inngest/client";
 import { getPresignedUrl } from "@/lib/s3";
 import { resumeService } from "@/server/modules/resume/resume.service";
+import { searchJobs } from "../jobs";
 
 export type OnboardingStartedEvent = {
     name: "hired/onboarding.started";
@@ -24,23 +25,35 @@ export const processOnboarding = inngest.createFunction(
         const { resumeId } = event.data;
 
         const { resume, jobPreferences } = await step.run("get-resume-and-job-preferences", async () => {
-            const resume = await db.query.resume.findFirst({
+            const resumeData = await db.query.resume.findFirst({
                 where: eq(Resume.id, resumeId),
             });
-            if (!resume) {
+            if (!resumeData) {
                 throw new Error("Resume not found");
             }
-
-            const jobPreferences = await db.query.jobPreferences.findFirst({
-                where: eq(JobPreferences.userId, resume.userId),
+            const prefs = await db.query.jobPreferences.findFirst({
+                where: eq(JobPreferences.userId, resumeData.userId),
             });
-            if (!jobPreferences) {
+            if (!prefs) {
                 throw new Error("Job preferences not found");
             }
+            return {
+                resume: resumeData,
+                jobPreferences: prefs,
+            };
+        });
 
-            return { resume, jobPreferences };
-        },
-        );
+        await step.run("update-status-start", async () => {
+            await db.update(user).set({
+                onboardingStatus: 'extracting',
+            }).where(eq(user.id, resume.userId));
+        });
+
+        await step.run("update-status-analyzing", async () => {
+            await db.update(user).set({
+                onboardingStatus: 'analyzing',
+            }).where(eq(user.id, resume.userId));
+        });
 
         const structuredOutput = step.run("structured-output", async () => {
             return await resumeService.structuredOutput(
@@ -110,5 +123,30 @@ export const processOnboarding = inngest.createFunction(
             });
         });
 
+        await step.run("update-status-searching", async () => {
+            await db.update(user).set({
+                onboardingStatus: 'searching',
+            }).where(eq(user.id, resume.userId));
+        });
+
+        await step.invoke("job-search", {
+            function: searchJobs,
+            data: {
+                userId: resume.userId,
+            },
+        });
+
+        await step.run("update-status-matching", async () => {
+            await db.update(user).set({
+                onboardingStatus: 'matching',
+            }).where(eq(user.id, resume.userId));
+        });
+
+        await step.run("update-status-finished", async () => {
+            await db.update(user).set({
+                onboardingCompleted: true,
+                onboardingStatus: 'finished',
+            }).where(eq(user.id, resume.userId));
+        });
     },
 );

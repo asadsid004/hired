@@ -1,7 +1,15 @@
 import { relations } from "drizzle-orm";
-import { pgTable, text, timestamp, boolean, index, jsonb, vector } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index, jsonb, vector, pgEnum } from "drizzle-orm/pg-core";
 
 import { ResumeProfile } from "@/lib/ai/schemas/resume.schema";
+
+export const onboardingStatusEnum = pgEnum("onboarding_status", [
+  "extracting",
+  "analyzing",
+  "searching",
+  "matching",
+  "finished",
+]);
 
 export const user = pgTable("user", {
   id: text("id").primaryKey(),
@@ -10,6 +18,7 @@ export const user = pgTable("user", {
   emailVerified: boolean("email_verified").default(false).notNull(),
   image: text("image"),
   onboardingCompleted: boolean("onboarding_completed").notNull().default(false),
+  onboardingStatus: onboardingStatusEnum("onboarding_status"),
   profile: jsonb("profile").$type<ResumeProfile>(),
   profileEmbedding: vector('profile_embedding', { dimensions: 768 }),
   createdAt: timestamp("created_at").defaultNow().notNull(),

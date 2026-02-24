@@ -44,13 +44,13 @@ import {
 import { useMutation } from "@tanstack/react-query";
 import { client } from "@/lib/client";
 import { Spinner } from "../ui/spinner";
-import { useRouter } from "next/navigation";
+import { OnboardingProcessing } from "./onboarding-processing";
 
 export const OnboardingForm = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [roleInput, setRoleInput] = useState("");
   const [locationInput, setLocationInput] = useState("");
-  const router = useRouter();
+  const [isProcessing, setIsProcessing] = useState(false);
 
   const { mutate, isPending } = useMutation({
     mutationFn: async (data: OnboardingFormData) => {
@@ -60,8 +60,7 @@ export const OnboardingForm = () => {
       }
     },
     onSuccess: () => {
-      toast.success("Onboarding completed successfully!");
-      router.push("/dashboard");
+      setIsProcessing(true);
     },
     onError: () => {
       toast.error("Failed to complete onboarding. Please try again.");
@@ -225,9 +224,8 @@ export const OnboardingForm = () => {
             {[0, 1, 2, 3].map((index) => (
               <div
                 key={index}
-                className={`mx-1 h-2 flex-1 rounded-full transition-all duration-300 ${
-                  index <= currentStep ? "bg-primary" : "bg-accent"
-                }`}
+                className={`mx-1 h-2 flex-1 rounded-full transition-all duration-300 ${index <= currentStep ? "bg-primary" : "bg-accent"
+                  }`}
               />
             ))}
           </div>
@@ -240,13 +238,12 @@ export const OnboardingForm = () => {
         <div className="relative min-h-[40vh] overflow-hidden sm:min-h-[60vh]">
           {/* ROLES */}
           <FieldGroup
-            className={`transition-all duration-300 ease-in-out ${
-              currentStep === 0
-                ? "translate-x-0 opacity-100"
-                : currentStep > 0
-                  ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
-                  : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
-            }`}
+            className={`transition-all duration-300 ease-in-out ${currentStep === 0
+              ? "translate-x-0 opacity-100"
+              : currentStep > 0
+                ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
+                : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
+              }`}
           >
             <form.Field name="role">
               {(field) => {
@@ -363,13 +360,12 @@ export const OnboardingForm = () => {
 
           {/* EMPLOYMENT TYPE */}
           <FieldGroup
-            className={`transition-all duration-300 ease-in-out ${
-              currentStep === 1
-                ? "translate-x-0 opacity-100"
-                : currentStep > 1
-                  ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
-                  : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
-            }`}
+            className={`transition-all duration-300 ease-in-out ${currentStep === 1
+              ? "translate-x-0 opacity-100"
+              : currentStep > 1
+                ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
+                : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
+              }`}
           >
             <form.Field name="type">
               {(field) => {
@@ -422,13 +418,12 @@ export const OnboardingForm = () => {
 
           {/* WORK MODE & LOCATION */}
           <FieldGroup
-            className={`transition-all duration-300 ease-in-out ${
-              currentStep === 2
-                ? "translate-x-0 opacity-100"
-                : currentStep > 2
-                  ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
-                  : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
-            }`}
+            className={`transition-all duration-300 ease-in-out ${currentStep === 2
+              ? "translate-x-0 opacity-100"
+              : currentStep > 2
+                ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
+                : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
+              }`}
           >
             <form.Field name="mode">
               {(field) => {
@@ -570,13 +565,12 @@ export const OnboardingForm = () => {
 
           {/* RESUME UPLOAD */}
           <FieldGroup
-            className={`transition-all duration-300 ease-in-out ${
-              currentStep === 3
-                ? "translate-x-0 opacity-100"
-                : currentStep > 3
-                  ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
-                  : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
-            }`}
+            className={`transition-all duration-300 ease-in-out ${currentStep === 3
+              ? "translate-x-0 opacity-100"
+              : currentStep > 3
+                ? "pointer-events-none absolute inset-0 -translate-x-full opacity-0"
+                : "pointer-events-none absolute inset-0 translate-x-full opacity-0"
+              }`}
           >
             <form.Field name="resume">
               {(field) => {
@@ -670,6 +664,8 @@ export const OnboardingForm = () => {
           </Button>
         )}
       </div>
+
+      <OnboardingProcessing isOpen={isProcessing} />
     </div>
   );
 };
