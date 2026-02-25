@@ -20,7 +20,7 @@ const NavItems = [
 
 export const MainNavbar = () => {
   return (
-    <div className="border-b px-4 py-3">
+    <div className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-0 z-50 border-b px-4 py-3 backdrop-blur">
       <div className="mx-auto flex max-w-7xl items-center justify-between">
         <Logo />
         <div className="flex items-center gap-4">

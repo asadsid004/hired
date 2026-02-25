@@ -1,8 +1,8 @@
-import { Elysia } from 'elysia';
+import { Elysia, t } from 'elysia';
 import { authMiddleware } from '@/server/middleware/auth';
 import { db } from '@/db/drizzle';
 import { userJobs, jobs } from '@/db/schema/jobs-schema';
-import { desc, eq } from 'drizzle-orm';
+import { desc, eq, and } from 'drizzle-orm';
 
 export const jobsRoutes = new Elysia({ prefix: '/jobs' })
     .use(authMiddleware)
@@ -17,11 +17,39 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
             .where(eq(userJobs.userId, user.id))
             .orderBy(desc(userJobs.relevanceScore));
 
-        // Group the data cleanly
         return results.map(row => ({
             ...row.job,
             userJobRecord: row.userJob,
         }));
     }, {
         auth: true
+    })
+    .patch('/:id/status', async ({ params, body: { status }, user }) => {
+        const updated = await db
+            .update(userJobs)
+            .set({ status })
+            .where(
+                and(
+                    eq(userJobs.jobId, parseInt(params.id)),
+                    eq(userJobs.userId, user.id)
+                )
+            )
+            .returning();
+
+        return updated[0];
+    }, {
+        auth: true,
+        body: t.Object({
+            status: t.Union([
+                t.Literal('new'),
+                t.Literal('viewed'),
+                t.Literal('saved'),
+                t.Literal('applied'),
+                t.Literal('hidden'),
+                t.Literal('rejected'),
+            ])
+        }),
+        params: t.Object({
+            id: t.String()
+        })
     });

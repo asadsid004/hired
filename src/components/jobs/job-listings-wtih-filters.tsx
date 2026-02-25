@@ -8,6 +8,7 @@ import { cn } from "@/lib/utils";
 import { client } from "@/lib/client";
 import { JobCard, JobData } from "./job-card";
 import { Button } from "../ui/button";
+import { JobsListSkeleton } from "./jobs-skeleton";
 
 export const JobListingWithFilers = () => {
   const [activeTab, setActiveTab] = useState<
@@ -24,29 +25,11 @@ export const JobListingWithFilers = () => {
     queryFn: async () => {
       const res = await client.jobs.get();
       if (!res.data || res.error) throw new Error("Failed to load jobs");
-      const jobs = res.data.map((job) => ({
-        id: job.id,
-        jobTitle: job.jobTitle,
-        company: job.company,
-        location: job.location,
-        userJobRecord: {
-          status: job.userJobRecord.status,
-          relevanceScore: job.userJobRecord.relevanceScore,
-        },
-      }));
-      return jobs;
+      return res.data as unknown as JobData[];
     },
   });
 
-  if (isLoading) {
-    return (
-      <div className="flex h-48 w-full items-center justify-center">
-        <p className="text-muted-foreground animate-pulse text-sm">
-          Loading jobs...
-        </p>
-      </div>
-    );
-  }
+  if (isLoading) return <JobsListSkeleton />;
 
   if (error) {
     return <div className="text-destructive">{error.message}</div>;
@@ -84,7 +67,7 @@ export const JobListingWithFilers = () => {
 
   return (
     <div className="w-full space-y-6">
-      <div className="flex flex-col gap-4 md:flex-row md:items-center">
+      <div className="bg-background/95 supports-backdrop-filter:bg-background/60 sticky top-[60px] z-40 -mx-1 flex flex-col gap-4 px-1 py-2 backdrop-blur md:flex-row md:items-center">
         <div className="flex shrink-0 items-center justify-between">
           <div className="flex items-center gap-2">
             <h1 className="text-2xl font-medium tracking-tight uppercase">
