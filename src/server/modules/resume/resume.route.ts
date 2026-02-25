@@ -3,6 +3,7 @@ import { authMiddleware } from '@/server/middleware/auth';
 import { db } from '@/db/drizzle';
 import { resume } from '@/db/schema/resume-schema';
 import { eq, and } from 'drizzle-orm';
+import { resumeService } from './resume.service';
 
 export const resumeRoutes = new Elysia({ prefix: '/resume' })
     .use(authMiddleware)
@@ -75,5 +76,50 @@ export const resumeRoutes = new Elysia({ prefix: '/resume' })
         auth: true,
         params: t.Object({
             id: t.String()
+        })
+    })
+    .post('/:id/tailor', async ({ params, body, user }) => {
+        const { jobTitle, jobDescription } = body;
+
+        const results = await db
+            .select()
+            .from(resume)
+            .where(
+                and(
+                    eq(resume.id, params.id),
+                    eq(resume.userId, user.id)
+                )
+            );
+
+        if (results.length === 0) {
+            throw new Error("Resume not found");
+        }
+
+        const currentResume = results[0];
+        if (!currentResume.data) {
+            throw new Error("Resume data not found");
+        }
+
+        const tailoredData = await resumeService.tailorResume(
+            currentResume.data,
+            jobTitle,
+            jobDescription
+        );
+
+        const updated = await db
+            .update(resume)
+            .set({ data: tailoredData, updatedAt: new Date() })
+            .where(eq(resume.id, params.id))
+            .returning();
+
+        return updated[0];
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.String()
+        }),
+        body: t.Object({
+            jobTitle: t.String(),
+            jobDescription: t.String()
         })
     });

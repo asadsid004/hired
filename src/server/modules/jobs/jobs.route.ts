@@ -2,7 +2,11 @@ import { Elysia, t } from 'elysia';
 import { authMiddleware } from '@/server/middleware/auth';
 import { db } from '@/db/drizzle';
 import { userJobs, jobs } from '@/db/schema/jobs-schema';
-import { desc, eq, and } from 'drizzle-orm';
+import { desc, eq, and, getTableColumns } from 'drizzle-orm';
+
+// 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+const { embedding, ...jobColumnsWithoutEmbedding } = getTableColumns(jobs);
 
 export const jobsRoutes = new Elysia({ prefix: '/jobs' })
     .use(authMiddleware)
@@ -10,7 +14,23 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
         const results = await db
             .select({
                 userJob: userJobs,
-                job: jobs,
+                job: {
+                    id: jobs.id,
+                    jobTitle: jobs.jobTitle,
+                    company: jobs.company,
+                    companyLogo: jobs.companyLogo,
+                    companyIndustry: jobs.companyIndustry,
+                    location: jobs.location,
+                    url: jobs.url,
+                    remote: jobs.remote,
+                    hybrid: jobs.hybrid,
+                    datePosted: jobs.datePosted,
+                    salaryString: jobs.salaryString,
+                    minAnnualSalaryUsd: jobs.minAnnualSalaryUsd,
+                    maxAnnualSalaryUsd: jobs.maxAnnualSalaryUsd,
+                    seniority: jobs.seniority,
+                    employmentStatuses: jobs.employmentStatuses,
+                },
             })
             .from(userJobs)
             .innerJoin(jobs, eq(userJobs.jobId, jobs.id))
@@ -28,7 +48,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
         const results = await db
             .select({
                 userJob: userJobs,
-                job: jobs,
+                job: jobColumnsWithoutEmbedding,
             })
             .from(userJobs)
             .innerJoin(jobs, eq(userJobs.jobId, jobs.id))

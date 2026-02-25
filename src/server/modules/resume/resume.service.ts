@@ -11,12 +11,14 @@ import {
     RESUME_EXTRACTION_SYSTEM_PROMPT,
     SECTION_ANALYSIS_SYSTEM_PROMPT,
     SEMANTIC_ANALYSIS_SYSTEM_PROMPT,
+    TAILOR_RESUME_SYSTEM_PROMPT,
 } from "@/lib/ai/prompts/system/resume.system.prompt";
 import {
     ATSAnalysisPrompt,
     buildResumeExtractionPrompt,
     buildSectionAnalysisPrompt,
     buildSemanticAnalysisPrompt,
+    buildTailorResumePrompt,
 } from "@/lib/ai/prompts/tasks/resume.task.prompt";
 import {
     ATSAnalysisSchema,
@@ -148,6 +150,18 @@ export const resumeService = {
             prompt: buildSemanticAnalysisPrompt(text, jobPreferences),
             output: Output.object({
                 schema: SemanticAnalysisSchema,
+            }),
+        });
+
+        return output;
+    },
+    async tailorResume(resumeData: ResumeProfile, jobTitle: string, jobDescription: string) {
+        const { output } = await generateText({
+            model: getModel(),
+            system: TAILOR_RESUME_SYSTEM_PROMPT,
+            prompt: buildTailorResumePrompt(JSON.stringify(resumeData), jobTitle, jobDescription),
+            output: Output.object({
+                schema: ResumeProfileSchema,
             }),
         });
 

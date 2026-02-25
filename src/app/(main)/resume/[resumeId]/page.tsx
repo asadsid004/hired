@@ -5,8 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/client";
 import { ResumeProfile } from "@/lib/ai/schemas/resume.schema";
-import { ResumeEditor } from "./resume-editor";
-import ResumePreview from "./resume-preview";
+import { ResumeEditor } from "../../../../components/resume/resume-editor";
+import ResumePreview from "../../../../components/resume/resume-preview";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { HugeiconsIcon } from "@hugeicons/react";
@@ -14,9 +14,9 @@ import {
   ArrowLeft01Icon,
   FloppyDiskIcon,
   Delete01Icon,
-  MagicWand01Icon,
 } from "@hugeicons/core-free-icons";
 import { Spinner } from "@/components/ui/spinner";
+import { TailorResumeDialog } from "@/components/resume/tailor-resume-dialog";
 
 export default function ResumeDetailPage() {
   const params = useParams();
@@ -116,14 +116,7 @@ export default function ResumeDetailPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <Button variant="secondary" className="gap-2">
-            <HugeiconsIcon
-              icon={MagicWand01Icon}
-              className="text-primary h-4 w-4"
-              strokeWidth={2}
-            />
-            Tailor Resume
-          </Button>
+          <TailorResumeDialog resumeId={resumeId} setLocalData={setLocalData} />
           <Button
             variant="default"
             disabled={!isChanged || updateResume.isPending}

@@ -358,3 +358,39 @@ Focus on high-value keywords that appear frequently in ${jobPreferences.role.joi
 
 Provide specific, actionable feedback that helps this candidate optimize their resume for: ${jobPreferences.role.join(', ')}.`;
 }
+
+export function buildTailorResumePrompt(
+   resumeData: string,
+   jobTitle: string,
+   jobDescription: string
+): string {
+   return `# Resume Tailoring Task
+
+## Target Position:
+**${jobTitle}**
+
+## Job Description:
+${jobDescription}
+
+---
+
+## Original Resume Data:
+\`\`\`json
+${resumeData}
+\`\`\`
+
+---
+
+## Instructions:
+1. Analyze the job description to identify key requirements, skills, and keywords
+2. Review the candidate's current resume data
+3. Tailor the resume following the system prompt rules:
+   - Keep all factual information unchanged
+   - Reframe experience and project descriptions to highlight relevant aspects
+   - Adjust skills to better match requirements (within 50% flexibility)
+   - Remove or minimize personal summary unless already substantial
+4. Return the complete tailored resume as valid JSON matching the ResumeProfile schema
+
+## Expected Output:
+Return ONLY the tailored JSON object. No explanations, no markdown code blocks, just the raw JSON.`;
+}
