@@ -51,8 +51,11 @@ export const jobs = pgTable('jobs', {
     datePosted: timestamp('date_posted'),
     discoveredAt: timestamp('discovered_at'),
 
-    createdAt: timestamp('created_at').defaultNow(),
-    updatedAt: timestamp('updated_at').defaultNow(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    updatedAt: timestamp("updated_at")
+        .defaultNow()
+        .$onUpdate(() => new Date())
+        .notNull(),
 });
 
 export const userJobStatusEnum = pgEnum('user_job_status', [
