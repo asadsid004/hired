@@ -26,7 +26,7 @@ export function SignInForm({ title = "Sign In" }: { title?: string }) {
       setIsLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard",
+        callbackURL: "/jobs",
       });
     } catch (error) {
       const err = error as Error;
@@ -42,9 +42,7 @@ export function SignInForm({ title = "Sign In" }: { title?: string }) {
   }
 
   if (session) {
-    return (
-      <Button onClick={() => router.push("/dashboard")}>Go to Dashboard</Button>
-    );
+    return <Button onClick={() => router.push("/jobs")}>Go to Jobs</Button>;
   }
 
   return (

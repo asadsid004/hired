@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 const OnboardingPage = async () => {
-
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -14,7 +13,7 @@ const OnboardingPage = async () => {
   }
 
   if (session.user.onboardingCompleted) {
-    redirect("/dashboard");
+    redirect("/jobs");
   }
 
   return (

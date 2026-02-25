@@ -3,7 +3,7 @@ import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export const Logo = ({
-  href = "/dashboard",
+  href = "/jobs",
   className,
 }: {
   href?: string;
