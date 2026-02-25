@@ -165,7 +165,6 @@ export const JobsService = {
 
             if (matchedSkills.length > 0) {
                 const displaySkills = matchedSkills
-                    .slice(0, 5)
                     .map((s) => s.charAt(0).toUpperCase() + s.slice(1));
                 reasons.push(`Matches your skills in ${displaySkills.join(", ")}`);
             }

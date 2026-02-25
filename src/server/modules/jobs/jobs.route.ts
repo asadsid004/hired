@@ -24,6 +24,36 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
     }, {
         auth: true
     })
+    .get('/:id', async ({ params, user }) => {
+        const results = await db
+            .select({
+                userJob: userJobs,
+                job: jobs,
+            })
+            .from(userJobs)
+            .innerJoin(jobs, eq(userJobs.jobId, jobs.id))
+            .where(
+                and(
+                    eq(userJobs.jobId, parseInt(params.id)),
+                    eq(userJobs.userId, user.id)
+                )
+            );
+
+        if (results.length === 0) {
+            throw new Error("Job not found");
+        }
+
+        const row = results[0];
+        return {
+            ...row.job,
+            userJobRecord: row.userJob,
+        };
+    }, {
+        auth: true,
+        params: t.Object({
+            id: t.String()
+        })
+    })
     .patch('/:id/status', async ({ params, body: { status }, user }) => {
         const updated = await db
             .update(userJobs)

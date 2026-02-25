@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
+import Image from "next/image";
 
 export type JobData = {
   id: number;
@@ -152,11 +153,12 @@ export const JobCard = ({ job }: { job: JobData }) => {
         <div className="flex items-start gap-4">
           <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white">
             {job.companyLogo ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={job.companyLogo}
                 alt={job.company}
                 className="h-full w-full object-contain p-1"
+                width={56}
+                height={56}
               />
             ) : (
               <HugeiconsIcon

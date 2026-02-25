@@ -22,6 +22,7 @@ export const JobListingWithFilers = () => {
     error,
   } = useQuery<JobData[]>({
     queryKey: ["jobs"],
+    staleTime: 1000 * 60 * 10, // 10 minutes
     queryFn: async () => {
       const res = await client.jobs.get();
       if (!res.data || res.error) throw new Error("Failed to load jobs");
