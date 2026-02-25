@@ -9,12 +9,12 @@ import { Button } from "@/components/ui/button";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Delete01Icon, PlusSignIcon } from "@hugeicons/core-free-icons";
 
-interface ResumeEditorProps {
+interface ProfileEditorProps {
   data: ResumeProfile;
   onChange: (data: ResumeProfile) => void;
 }
 
-export function ResumeEditor({ data, onChange }: ResumeEditorProps) {
+export function ProfileEditor({ data, onChange }: ProfileEditorProps) {
   const updateField = (
     section: keyof ResumeProfile,
     field: string,
@@ -63,7 +63,7 @@ export function ResumeEditor({ data, onChange }: ResumeEditorProps) {
 
   return (
     <div className="space-y-8">
-      <section className="space-y-4 pt-4">
+      <section className="space-y-4">
         <h3 className="text-lg font-semibold">Personal Information</h3>
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           <div className="space-y-2">
