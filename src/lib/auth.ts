@@ -1,10 +1,10 @@
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "@/db/drizzle"; // your drizzle instance
+import { dbEdge } from "@/db/db-edge";
 import { nextCookies } from "better-auth/next-js";
 
 export const auth = betterAuth({
-    database: drizzleAdapter(db, {
+    database: drizzleAdapter(dbEdge, {
         provider: "pg",
     }),
     socialProviders: {
