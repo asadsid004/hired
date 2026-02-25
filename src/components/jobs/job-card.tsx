@@ -19,11 +19,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
+import { toast } from "sonner";
 
 export type JobData = {
   id: number;
@@ -41,6 +43,7 @@ export type JobData = {
   hybrid?: boolean | null;
   companyIndustry?: string | null;
   url: string;
+  tailoredResumeId?: string | null;
   userJobRecord: {
     status: "new" | "viewed" | "saved" | "applied" | "hidden" | "rejected";
     relevanceScore: string | null | number;
@@ -98,6 +101,27 @@ export const JobCard = ({ job }: { job: JobData }) => {
 
   const isSaved = job.userJobRecord.status === "saved";
   const isApplied = job.userJobRecord.status === "applied";
+  const hasTailored = !!job.tailoredResumeId;
+
+  const tailorMutation = useMutation({
+    mutationFn: async () => {
+      const res = await client.resume.create.post({
+        jobTitle: job.jobTitle,
+        jobDescription: `${job.jobTitle} at ${job.company}`,
+        jobId: job.id,
+        fileName: `${job.jobTitle} - ${job.company}`,
+      });
+      if (res.error) throw new Error("Failed to tailor resume");
+      return res.data;
+    },
+    onSuccess: () => {
+      toast.success(hasTailored ? "Resume re-tailored!" : "Resume tailored!");
+      queryClient.invalidateQueries({ queryKey: ["jobs"] });
+    },
+    onError: () => {
+      toast.error("Failed to tailor resume");
+    },
+  });
 
   const toggleSave = () => {
     updateStatus.mutate(isSaved ? "new" : "saved");
@@ -319,21 +343,42 @@ export const JobCard = ({ job }: { job: JobData }) => {
                 />
               </Button>
             </DropdownMenuTrigger>
-            {isApplied ? (
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={markUnapplied} disabled={!isApplied}>
+            <DropdownMenuContent align="end" className="w-48">
+              {isApplied ? (
+                <DropdownMenuItem onClick={markUnapplied}>
                   Mark as Unapplied
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>Tailor Resume</DropdownMenuItem>
-              </DropdownMenuContent>
-            ) : (
-              <DropdownMenuContent align="end" className="w-48">
-                <DropdownMenuItem onClick={markApplied} disabled={isApplied}>
+              ) : (
+                <DropdownMenuItem onClick={markApplied}>
                   Mark as Applied
                 </DropdownMenuItem>
-                <DropdownMenuItem disabled>Tailor Resume</DropdownMenuItem>
-              </DropdownMenuContent>
-            )}
+              )}
+              <DropdownMenuSeparator />
+              {hasTailored ? (
+                <>
+                  <DropdownMenuItem asChild>
+                    <Link href={`/resume/${job.tailoredResumeId}`}>
+                      View Tailored Resume
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => tailorMutation.mutate()}
+                    disabled={tailorMutation.isPending}
+                  >
+                    {tailorMutation.isPending
+                      ? "Re-tailoring..."
+                      : "Re-tailor Resume"}
+                  </DropdownMenuItem>
+                </>
+              ) : (
+                <DropdownMenuItem
+                  onClick={() => tailorMutation.mutate()}
+                  disabled={tailorMutation.isPending}
+                >
+                  {tailorMutation.isPending ? "Tailoring..." : "Tailor Resume"}
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
           </DropdownMenu>
         </div>
       </div>

@@ -2,6 +2,7 @@ import { Elysia, t } from 'elysia';
 import { authMiddleware } from '@/server/middleware/auth';
 import { db } from '@/db/drizzle';
 import { userJobs, jobs } from '@/db/schema/jobs-schema';
+import { resume } from '@/db/schema/resume-schema';
 import { desc, eq, and, getTableColumns } from 'drizzle-orm';
 
 // 
@@ -31,15 +32,21 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
                     seniority: jobs.seniority,
                     employmentStatuses: jobs.employmentStatuses,
                 },
+                tailoredResumeId: resume.id,
             })
             .from(userJobs)
             .innerJoin(jobs, eq(userJobs.jobId, jobs.id))
+            .leftJoin(resume, and(
+                eq(resume.jobId, jobs.id),
+                eq(resume.userId, user.id)
+            ))
             .where(eq(userJobs.userId, user.id))
             .orderBy(desc(userJobs.relevanceScore));
 
         return results.map(row => ({
             ...row.job,
             userJobRecord: row.userJob,
+            tailoredResumeId: row.tailoredResumeId,
         }));
     }, {
         auth: true
@@ -49,9 +56,14 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
             .select({
                 userJob: userJobs,
                 job: jobColumnsWithoutEmbedding,
+                tailoredResumeId: resume.id,
             })
             .from(userJobs)
             .innerJoin(jobs, eq(userJobs.jobId, jobs.id))
+            .leftJoin(resume, and(
+                eq(resume.jobId, jobs.id),
+                eq(resume.userId, user.id)
+            ))
             .where(
                 and(
                     eq(userJobs.jobId, parseInt(params.id)),
@@ -67,6 +79,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
         return {
             ...row.job,
             userJobRecord: row.userJob,
+            tailoredResumeId: row.tailoredResumeId,
         };
     }, {
         auth: true,

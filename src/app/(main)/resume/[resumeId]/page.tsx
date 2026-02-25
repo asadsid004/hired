@@ -64,6 +64,7 @@ export default function ResumeDetailPage() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["resume"] });
+      router.push("/resume");
     },
   });
 
