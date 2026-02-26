@@ -102,36 +102,53 @@ export const searchJobs = inngest.createFunction(
                     companyDomain: job.company_domain,
                     companyLogo: job.company_object?.logo,
                     companyIndustry: job.company_object?.industry,
-                    companyEmployeeCount: job.company_object?.employee_count,
+                    // integer column — API can return floats
+                    companyEmployeeCount: job.company_object?.employee_count != null
+                        ? Math.round(job.company_object.employee_count)
+                        : null,
                     companyCountryCode: job.company_object?.country_code,
                     companyDescription: job.company_object?.seo_description,
                     companyLinkedinUrl: job.company_object?.linkedin_url,
-                    companyFoundedYear: job.company_object?.founded_year,
+                    // integer column — API can return floats
+                    companyFoundedYear: job.company_object?.founded_year != null
+                        ? Math.round(job.company_object.founded_year)
+                        : null,
                     companyTechnologySlugs: job.company_object?.technology_slugs,
                     location: job.location,
                     shortLocation: job.short_location,
                     stateCode: job.state_code,
                     countryCode: job.country_code,
-                    remote: job.remote,
-                    hybrid: job.hybrid,
-                    latitude: job.latitude ? job.latitude.toString() : null,
-                    longitude: job.longitude ? job.longitude.toString() : null,
+                    // boolean columns — default false if API returns null/undefined
+                    remote: job.remote ?? false,
+                    hybrid: job.hybrid ?? false,
+                    latitude: job.latitude != null ? job.latitude.toString() : null,
+                    longitude: job.longitude != null ? job.longitude.toString() : null,
                     salaryString: job.salary_string,
-                    minAnnualSalaryUsd: job.min_annual_salary_usd,
-                    maxAnnualSalaryUsd: job.max_annual_salary_usd,
-                    avgAnnualSalaryUsd: job.avg_annual_salary_usd,
+                    // integer columns — API returns floats like (min+max)/2
+                    minAnnualSalaryUsd: job.min_annual_salary_usd != null
+                        ? Math.round(job.min_annual_salary_usd)
+                        : null,
+                    maxAnnualSalaryUsd: job.max_annual_salary_usd != null
+                        ? Math.round(job.max_annual_salary_usd)
+                        : null,
+                    avgAnnualSalaryUsd: job.avg_annual_salary_usd != null
+                        ? Math.round(job.avg_annual_salary_usd)
+                        : null,
                     seniority: job.seniority,
                     employmentStatuses: job.employment_statuses,
                     technologySlugs: job.technology_slugs,
                     datePosted: job.date_posted ? new Date(job.date_posted) : new Date(),
                     discoveredAt: job.discovered_at ? new Date(job.discovered_at) : null,
-                    reposted: job.reposted,
+                    // boolean columns — default false if API returns null/undefined
+                    reposted: job.reposted ?? false,
                     dateReposted: job.date_reposted ? new Date(job.date_reposted) : null,
-                    easyApply: job.easy_apply,
-                    hiringTeamFirstName: firstHiringTeamMember?.first_name || null,
-                    hiringTeamLastName: firstHiringTeamMember ? firstHiringTeamMember.full_name.replace(firstHiringTeamMember.first_name, '').trim() : null,
-                    hiringTeamLinkedinUrl: firstHiringTeamMember?.linkedin_url || null,
-                    embedding: embeddingsMap[job.id] || null
+                    easyApply: job.easy_apply ?? false,
+                    hiringTeamFirstName: firstHiringTeamMember?.first_name ?? null,
+                    hiringTeamLastName: firstHiringTeamMember
+                        ? firstHiringTeamMember.full_name.replace(firstHiringTeamMember.first_name, '').trim()
+                        : null,
+                    hiringTeamLinkedinUrl: firstHiringTeamMember?.linkedin_url ?? null,
+                    embedding: embeddingsMap[job.id] ?? null,
                 };
             });
 
@@ -174,9 +191,11 @@ export const searchJobs = inngest.createFunction(
                     userId,
                     jobId: jobData.id,
                     status: "new" as const,
-                    relevanceScore: scoreObj.score.toString(),
+                    // decimal(4,3) column — clamp to [0, 1] to guard against
+                    // floating-point drift from pgvector cosine distance
+                    relevanceScore: Math.min(1, Math.max(0, scoreObj.score)).toFixed(3),
                     matchReasons: reasonsArray,
-                    preferencesHash: prefHash
+                    preferencesHash: prefHash,
                 };
             });
 
