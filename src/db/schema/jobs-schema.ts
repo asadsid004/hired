@@ -1,4 +1,4 @@
-import { pgTable, text, integer, boolean, timestamp, decimal, jsonb, pgEnum, unique, vector } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, boolean, timestamp, decimal, jsonb, pgEnum, unique, vector, index } from 'drizzle-orm/pg-core';
 import { user } from './auth-schema';
 
 export const jobs = pgTable('jobs', {
@@ -51,12 +51,16 @@ export const jobs = pgTable('jobs', {
     datePosted: timestamp('date_posted'),
     discoveredAt: timestamp('discovered_at'),
 
+    preferenceHashes: jsonb('preference_hashes').$type<string[]>().default([]).notNull(),
+
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")
         .defaultNow()
         .$onUpdate(() => new Date())
         .notNull(),
-});
+}, (table) => [
+    index('jobs_preference_hashes_gin_idx').using('gin', table.preferenceHashes),
+]);
 
 export const userJobStatusEnum = pgEnum('user_job_status', [
     'new',

@@ -2,8 +2,8 @@ import { inngest } from "@/inngest/client";
 import { db } from "@/db/drizzle";
 import { Job } from "@/db/schema/jobs-schema";
 import { JobsService } from "@/server/modules/jobs/jobs.service";
-import { user, jobPreferences as JobPreferences, JobPreference, userJobs } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { user, jobPreferences as JobPreferences, JobPreference } from "@/db/schema";
+import { eq, sql } from "drizzle-orm";
 
 export type JobSearchEvent = {
     name: "hired/jobs.search";
@@ -42,6 +42,10 @@ export const searchJobs = inngest.createFunction(
             return { message: "No resume profile available to match jobs." };
         }
 
+        const prefHash = JobsService.generatePreferenceHash({
+            ...preferences
+        });
+
         // 2. Fetch jobs from TheirStack
         const rawJobsResult = await step.run("fetch-jobs", async () => {
             const results = await JobsService.getJobs({
@@ -52,15 +56,13 @@ export const searchJobs = inngest.createFunction(
             return results;
         });
 
-        if (!rawJobsResult.data || rawJobsResult.data.length === 0) {
-            return { message: "No jobs found for these preferences." };
-        }
-
-        const validJobs = rawJobsResult.data;
-        const validJobsExtended = [...rawJobsResult.data];
+        const validJobs = rawJobsResult.data ?? [];
+        const validJobsExtended = [...validJobs];
 
         // 3. Prepare jobs for database and embedding
         const { newJobsToSave } = await step.run("prepare-jobs", async () => {
+            if (validJobs.length === 0) return { newJobsToSave: [] as typeof validJobs };
+
             const currentJobIds = validJobs.map(j => j.id);
             const existingJobsInDb = await db.query.jobs.findMany({
                 where: (jobs, { inArray }) => inArray(jobs.id, currentJobIds),
@@ -89,8 +91,7 @@ export const searchJobs = inngest.createFunction(
 
         // 5. Save raw Jobs to Database
         await step.run("save-jobs", async () => {
-            if (newJobsToSave.length === 0) return;
-
+            if (validJobs.length === 0) return;
             const jobsInsertions = newJobsToSave.map(job => {
                 const firstHiringTeamMember = job.hiring_team?.[0];
                 return {
@@ -150,36 +151,35 @@ export const searchJobs = inngest.createFunction(
                         : null,
                     hiringTeamLinkedinUrl: firstHiringTeamMember?.linkedin_url ?? null,
                     embedding: embeddingsMap[job.id] ?? null,
+                    preferenceHashes: [prefHash],
                 };
             });
 
             await JobsService.saveJobs(jobsInsertions, []);
+
+            // Also ensure all api-fetched jobs have this prefHash in their preferenceHashes array
+            const currentJobIds = validJobs.map(j => j.id);
+            if (currentJobIds.length > 0) {
+                await db.execute(sql`
+                    UPDATE jobs 
+                    SET preference_hashes = COALESCE(preference_hashes, '[]'::jsonb) || ${JSON.stringify([prefHash])}::jsonb 
+                    WHERE id IN ${sql`(${sql.join(currentJobIds, sql`, `)})`}
+                    AND NOT (preference_hashes @> ${JSON.stringify([prefHash])}::jsonb)
+                `);
+            }
         });
 
         // 5.5 Fetch existing jobs from DB that match the preference hash
-        const prefHash = JobsService.generatePreferenceHash({
-            ...preferences
-        });
-
         const existingMatchingJobs = await step.run("fetch-existing-matched-jobs", async () => {
             const currentJobIds = new Set(validJobs.map(j => j.id));
 
-            // Find all jobIds that have been matched against this prefHash in the past
-            const matchedUserJobs = await db.query.userJobs.findMany({
-                where: eq(userJobs.preferencesHash, prefHash),
-                columns: { jobId: true }
-            });
-
-            const matchedJobIds = new Set(matchedUserJobs.map(uj => uj.jobId));
-            currentJobIds.forEach(id => matchedJobIds.delete(id));
-
-            if (matchedJobIds.size === 0) return [];
-
+            // Find all jobs that have this prefHash
             const dbJobs = await db.query.jobs.findMany({
-                where: (jobs, { inArray }) => inArray(jobs.id, Array.from(matchedJobIds))
+                where: (jobs, { sql }) => sql`${jobs.preferenceHashes} @> ${JSON.stringify([prefHash])}::jsonb`
             });
 
-            return dbJobs;
+            // Exclude jobs that we just fetched from API
+            return dbJobs.filter(dbJob => !currentJobIds.has(dbJob.id));
         });
 
         existingMatchingJobs.forEach(dbJob => {
@@ -201,11 +201,13 @@ export const searchJobs = inngest.createFunction(
         // 6. Compute Similarities using PG Vector
         const jobScores = await step.run("compute-similarities", async () => {
             const allJobIds = validJobsExtended.map(j => j.id);
+            if (allJobIds.length === 0) return [];
             return await JobsService.computeSimilarityInDb(userId, allJobIds);
         });
 
         // 7. Generate top matches and save UserJob connections
         await step.run("save-user-jobs-with-reasoning", async () => {
+            if (jobScores.length === 0) return;
             // Sort by score
             const sortedScoredJobs = [...jobScores].sort((a, b) => b.score - a.score);
 
