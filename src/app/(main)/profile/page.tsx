@@ -9,8 +9,14 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Loading03Icon, FloppyDiskIcon } from "@hugeicons/core-free-icons";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/client";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 export default function ProfilePage() {
+  const session = authClient.getSession();
+
+  const router = useRouter();
+
   const queryClient = useQueryClient();
   const [localProfile, setLocalProfile] = useState<ResumeProfile | null>(null);
 
@@ -66,6 +72,10 @@ export default function ProfilePage() {
       toast.error("Failed to save profile");
     },
   });
+
+  if (!session) {
+    router.push("/");
+  }
 
   if (isLoading) {
     return (

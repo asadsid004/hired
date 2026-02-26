@@ -17,6 +17,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { Spinner } from "@/components/ui/spinner";
 import { TailorResumeDialog } from "@/components/resume/tailor-resume-dialog";
+import { authClient } from "@/lib/auth-client";
 
 export default function ResumeDetailPage() {
   const params = useParams();
@@ -25,6 +26,12 @@ export default function ResumeDetailPage() {
   const resumeId = params.resumeId as string;
 
   const [localData, setLocalData] = useState<ResumeProfile | null>(null);
+
+  const session = authClient.getSession();
+
+  if (!session) {
+    router.push("/");
+  }
 
   const {
     data: resumeRecord,

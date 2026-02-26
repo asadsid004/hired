@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { JobDetailPageSkeleton } from "@/components/jobs/job-details-page-skeleton";
+import { authClient } from "@/lib/auth-client";
 
 export type DetailedJobData = {
   id: number;
@@ -87,6 +88,12 @@ export default function JobDetailPage() {
   const router = useRouter();
   const queryClient = useQueryClient();
   const jobId = params.jobId as string;
+
+  const session = authClient.getSession();
+
+  if (!session) {
+    router.push("/");
+  }
 
   const {
     data: job,
