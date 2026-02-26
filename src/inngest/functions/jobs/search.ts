@@ -2,7 +2,7 @@ import { inngest } from "@/inngest/client";
 import { db } from "@/db/drizzle";
 import { Job } from "@/db/schema/jobs-schema";
 import { JobsService } from "@/server/modules/jobs/jobs.service";
-import { user, jobPreferences as JobPreferences, JobPreference } from "@/db/schema";
+import { user, jobPreferences as JobPreferences, JobPreference, userJobs } from "@/db/schema";
 import { eq } from "drizzle-orm";
 
 export type JobSearchEvent = {
@@ -57,6 +57,7 @@ export const searchJobs = inngest.createFunction(
         }
 
         const validJobs = rawJobsResult.data;
+        const validJobsExtended = [...rawJobsResult.data];
 
         // 3. Prepare jobs for database and embedding
         const { newJobsToSave } = await step.run("prepare-jobs", async () => {
@@ -155,9 +156,51 @@ export const searchJobs = inngest.createFunction(
             await JobsService.saveJobs(jobsInsertions, []);
         });
 
+        // 5.5 Fetch existing jobs from DB that match the preference hash
+        const prefHash = JobsService.generatePreferenceHash({
+            ...preferences
+        });
+
+        const existingMatchingJobs = await step.run("fetch-existing-matched-jobs", async () => {
+            const currentJobIds = new Set(validJobs.map(j => j.id));
+
+            // Find all jobIds that have been matched against this prefHash in the past
+            const matchedUserJobs = await db.query.userJobs.findMany({
+                where: eq(userJobs.preferencesHash, prefHash),
+                columns: { jobId: true }
+            });
+
+            const matchedJobIds = new Set(matchedUserJobs.map(uj => uj.jobId));
+            currentJobIds.forEach(id => matchedJobIds.delete(id));
+
+            if (matchedJobIds.size === 0) return [];
+
+            const dbJobs = await db.query.jobs.findMany({
+                where: (jobs, { inArray }) => inArray(jobs.id, Array.from(matchedJobIds))
+            });
+
+            return dbJobs;
+        });
+
+        existingMatchingJobs.forEach(dbJob => {
+            validJobsExtended.push({
+                id: dbJob.id,
+                job_title: dbJob.jobTitle,
+                description: dbJob.description,
+                url: dbJob.url,
+                company: dbJob.company,
+                location: dbJob.location ?? "",
+                country_code: dbJob.countryCode ?? "",
+                remote: dbJob.remote ?? false,
+                hybrid: dbJob.hybrid ?? false,
+                employment_statuses: dbJob.employmentStatuses ?? [],
+                technology_slugs: dbJob.technologySlugs ?? [],
+            } as typeof validJobsExtended[0]);
+        });
+
         // 6. Compute Similarities using PG Vector
         const jobScores = await step.run("compute-similarities", async () => {
-            const allJobIds = validJobs.map(j => j.id);
+            const allJobIds = validJobsExtended.map(j => j.id);
             return await JobsService.computeSimilarityInDb(userId, allJobIds);
         });
 
@@ -166,10 +209,8 @@ export const searchJobs = inngest.createFunction(
             // Sort by score
             const sortedScoredJobs = [...jobScores].sort((a, b) => b.score - a.score);
 
-            const prefHash = JobsService.generatePreferenceHash({ ...preferences, createdAt: new Date(preferences.createdAt), updatedAt: new Date(preferences.updatedAt) });
-
             const userJobsInsertions = sortedScoredJobs.map((scoreObj) => {
-                const jobData = validJobs.find(j => j.id === scoreObj.jobId)!;
+                const jobData = validJobsExtended.find(j => j.id === scoreObj.jobId)!;
                 const mappedJobData = {
                     id: jobData.id,
                     jobTitle: jobData.job_title,
@@ -185,7 +226,7 @@ export const searchJobs = inngest.createFunction(
                 };
 
                 // Basic rule-based reasoning
-                const reasonsArray = JobsService.getRuleBasedMatchReasons(mappedJobData as unknown as Job, preferences as unknown as JobPreference, profile);
+                const reasonsArray = JobsService.getRuleBasedMatchReasons(mappedJobData as Job, preferences, profile);
 
                 return {
                     userId,

@@ -84,14 +84,14 @@ export const JobsService = {
 
         return Jobs;
     },
-    generatePreferenceHash(preferences: JobPreference) {
+    generatePreferenceHash(preferences: Omit<JobPreference, "createdAt" | "updatedAt">) {
         return createHash("sha256")
             .update(JSON.stringify(preferences))
             .digest("hex");
     },
     getRuleBasedMatchReasons(
         job: Job,
-        preferences: JobPreference,
+        preferences: Omit<JobPreference, "createdAt" | "updatedAt">,
         profile: ResumeProfile,
     ): string[] {
         const reasons: string[] = [];
