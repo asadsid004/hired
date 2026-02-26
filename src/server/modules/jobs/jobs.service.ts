@@ -84,7 +84,7 @@ export const JobsService = {
 
         return Jobs;
     },
-    generatePreferenceHash(preferences: Omit<JobPreference, "createdAt" | "updatedAt">) {
+    generatePreferenceHash(preferences: Omit<JobPreference, "id" | "userId" | "createdAt" | "updatedAt">) {
         return createHash("sha256")
             .update(JSON.stringify(preferences))
             .digest("hex");
