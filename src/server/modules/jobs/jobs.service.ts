@@ -85,8 +85,16 @@ export const JobsService = {
         return Jobs;
     },
     generatePreferenceHash(preferences: Omit<JobPreference, "id" | "userId" | "createdAt" | "updatedAt">) {
+        // Normalize arrays by sorting so order doesn't change the hash
+        const normalized = {
+            role: [...(preferences.role || [])].map(r => r.toLowerCase().trim()).sort(),
+            type: preferences.type,
+            mode: preferences.mode,
+            location: [...(preferences.location || [])].map(l => l.toLowerCase().trim()).sort(),
+        };
+
         return createHash("sha256")
-            .update(JSON.stringify(preferences))
+            .update(JSON.stringify(normalized, Object.keys(normalized).sort()))
             .digest("hex");
     },
     getRuleBasedMatchReasons(
