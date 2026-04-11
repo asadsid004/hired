@@ -13,6 +13,10 @@ const NavItems = [
     href: "/resume",
   },
   {
+    label: "Practice",
+    href: "/practice",
+  },
+  {
     label: "Profile",
     href: "/profile",
   },
