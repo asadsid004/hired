@@ -1,5 +1,5 @@
 import { db } from "@/db/drizzle";
-import { interviewSessions, interviewQuestions } from "@/db/schema/interview-schema";
+import { practiceSessions, practiceQuestions } from "@/db/schema/practice-schema";
 import { getModel } from "@/lib/ai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
@@ -7,7 +7,7 @@ import { inngest } from "@/inngest/client";
 import { eq } from "drizzle-orm";
 import { nanoid } from "nanoid";
 
-export const InterviewService = {
+export const PracticeService = {
   async generateQuestions(topics: string[], difficulty: string, count: number) {
     console.log("Generating questions for:", { topics, difficulty, count });
     const prompt = `You are a professional technical interviewer. 
@@ -47,7 +47,7 @@ export const InterviewService = {
     const sessionId = crypto.randomUUID();
 
     await db.transaction(async (tx) => {
-      await tx.insert(interviewSessions).values({
+      await tx.insert(practiceSessions).values({
         id: sessionId,
         userId,
         topics,
@@ -62,7 +62,7 @@ export const InterviewService = {
         questionText: q,
       }));
 
-      await tx.insert(interviewQuestions).values(questionRecords);
+      await tx.insert(practiceQuestions).values(questionRecords);
     });
 
     return sessionId;
@@ -70,13 +70,13 @@ export const InterviewService = {
 
   async triggerEvaluation(sessionId: string) {
     // Set status to evaluating
-    await db.update(interviewSessions)
+    await db.update(practiceSessions)
       .set({ status: "evaluating" })
-      .where(eq(interviewSessions.id, sessionId))
+      .where(eq(practiceSessions.id, sessionId))
 
     // trigger Inngest background job
     await inngest.send({
-      name: "hired/interview.evaluate",
+      name: "hired/practice.evaluate",
       data: { sessionId },
     });
   }

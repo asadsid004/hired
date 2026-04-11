@@ -157,7 +157,7 @@ export default function InterviewResultsPage({
   useEffect(() => {
     let interval: NodeJS.Timeout;
     const fetchSession = async () => {
-      const res = await client.interview.sessions({ id: sessionId }).get();
+      const res = await client.practice.sessions({ id: sessionId }).get();
       if (res.data) {
         setSession(res.data);
         if (res.data.status === "evaluating") {

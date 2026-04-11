@@ -4,7 +4,7 @@ import { onboardingRoutes } from "./modules/onboarding/onboarding.route";
 import { jobsRoutes } from "./modules/jobs/jobs.route";
 import { resumeRoutes } from "./modules/resume/resume.route";
 import { profileRoutes } from "./modules/profile/profile.route";
-import { interviewRoutes } from "./modules/interview/interview.route";
+import { practiceRoutes } from "./modules/practice/practice.route";
 
 export const app = new Elysia({ prefix: '/api' })
     .mount(auth.handler)
@@ -12,6 +12,6 @@ export const app = new Elysia({ prefix: '/api' })
     .use(jobsRoutes)
     .use(resumeRoutes)
     .use(profileRoutes)
-    .use(interviewRoutes)
+    .use(practiceRoutes)
 
 export type App = typeof app

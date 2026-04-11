@@ -1,6 +1,6 @@
 import * as onboardingFunctions from "./functions/onboarding";
 import * as jobsFunctions from "./functions/jobs";
-import * as interviewFunctions from "./functions/interview";
+import * as interviewFunctions from "./functions/practice";
 
 export const allFunctions = [
     ...Object.values(onboardingFunctions),

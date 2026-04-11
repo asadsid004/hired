@@ -39,7 +39,7 @@ export default function InterviewSessionPage({
 
   useEffect(() => {
     const init = async () => {
-      const res = await client.interview.sessions({ id: sessionId }).get();
+      const res = await client.practice.sessions({ id: sessionId }).get();
       if (res.data) {
         if (res.data.status !== "in_progress") {
           router.replace(`/practice/results/${sessionId}`);
@@ -77,7 +77,7 @@ export default function InterviewSessionPage({
         questionId: q.id,
         userAnswer: answers[q.id] || "",
       }));
-      const res = await client.interview
+      const res = await client.practice
         .sessions({ id: sessionId })
         .submit.post({ answers: answersPayload });
       if (res.data?.success) {

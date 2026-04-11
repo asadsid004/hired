@@ -1,16 +1,16 @@
 import { Elysia, t } from "elysia";
 import { authMiddleware } from "@/server/middleware/auth";
 import { db } from "@/db/drizzle";
-import { interviewSessions, interviewQuestions } from "@/db/schema/interview-schema";
+import { practiceSessions, practiceQuestions } from "@/db/schema/practice-schema";
 import { eq } from "drizzle-orm";
-import { InterviewService } from "./interview.service";
+import { PracticeService } from "./practice.service";
 
-export const interviewRoutes = new Elysia({ prefix: "/interview" })
+export const practiceRoutes = new Elysia({ prefix: "/practice" })
   .use(authMiddleware)
   .post(
     "/sessions",
     async ({ body, user }) => {
-      const sessionId = await InterviewService.createSession(
+      const sessionId = await PracticeService.createSession(
         user.id,
         body.topics,
         body.difficulty,
@@ -33,8 +33,8 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
   .get(
     "/sessions",
     async ({ user }) => {
-      const sessions = await db.query.interviewSessions.findMany({
-        where: eq(interviewSessions.userId, user.id),
+      const sessions = await db.query.practiceSessions.findMany({
+        where: eq(practiceSessions.userId, user.id),
         with: {
           questions: true,
         },
@@ -50,8 +50,8 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
   .get(
     "/sessions/:id",
     async ({ params, user }) => {
-      const session = await db.query.interviewSessions.findFirst({
-        where: eq(interviewSessions.id, params.id),
+      const session = await db.query.practiceSessions.findFirst({
+        where: eq(practiceSessions.id, params.id),
         with: {
           questions: true,
         },
@@ -77,8 +77,8 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
   .post(
     "/sessions/:id/submit",
     async ({ params, body, user }) => {
-      const session = await db.query.interviewSessions.findFirst({
-        where: eq(interviewSessions.id, params.id),
+      const session = await db.query.practiceSessions.findFirst({
+        where: eq(practiceSessions.id, params.id),
       });
 
       if (!session || session.userId !== user.id) {
@@ -89,22 +89,22 @@ export const interviewRoutes = new Elysia({ prefix: "/interview" })
       await db.transaction(async (tx) => {
         for (const answer of body.answers) {
           await tx
-            .update(interviewQuestions)
+            .update(practiceQuestions)
             .set({ userAnswer: answer.userAnswer })
-            .where(eq(interviewQuestions.id, answer.questionId));
+            .where(eq(practiceQuestions.id, answer.questionId));
         }
 
         await tx
-          .update(interviewSessions)
-          .set({ 
+          .update(practiceSessions)
+          .set({
             status: "evaluating",
             completedAt: new Date()
-           })
-          .where(eq(interviewSessions.id, params.id));
+          })
+          .where(eq(practiceSessions.id, params.id));
       });
 
       // Trigger background job
-      await InterviewService.triggerEvaluation(params.id);
+      await PracticeService.triggerEvaluation(params.id);
 
       return { success: true };
     },

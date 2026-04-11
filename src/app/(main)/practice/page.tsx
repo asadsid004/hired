@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button";
 import { PracticeForm } from "@/components/practice/practice-form";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
+import { Session } from "./results/[id]/page";
 
 export default function PracticeMainPage() {
   const [showForm, setShowForm] = useState(false);
@@ -26,10 +27,10 @@ export default function PracticeMainPage() {
     data: sessions,
     isLoading,
     error,
-  } = useQuery({
+  } = useQuery<Session[]>({
     queryKey: ["practice-sessions"],
     queryFn: async () => {
-      const res = await client.interview.sessions.get();
+      const res = await client.practice.sessions.get();
       if (!res.data || res.error) throw new Error("Failed to load sessions");
       return res.data;
     },

@@ -49,7 +49,7 @@ export const PracticeForm = ({ onSuccess }: { onSuccess?: () => void }) => {
           .map((t) => t.trim())
           .filter(Boolean);
 
-        const res = await client.interview.sessions.post({
+        const res = await client.practice.sessions.post({
           topics: parsedTopics,
           difficulty: value.difficulty,
           durationMinutes: value.durationMinutes,

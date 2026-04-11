@@ -1,26 +1,26 @@
 import { inngest } from "@/inngest/client";
 import { db } from "@/db/drizzle";
-import { interviewSessions, interviewQuestions } from "@/db/schema/interview-schema";
+import { practiceSessions, practiceQuestions } from "@/db/schema/practice-schema";
 import { eq } from "drizzle-orm";
 import { getModel } from "@/lib/ai";
 import { generateText, Output } from "ai";
 import { z } from "zod";
 
-export type InterviewEvaluateEvent = {
+export type PracticeEvaluateEvent = {
     data: {
         sessionId: string;
     };
 };
 
-export const evaluateInterview = inngest.createFunction(
-    { id: "evaluate-interview", name: "Evaluate Interview" },
-    { event: "hired/interview.evaluate" },
+export const evaluatePractice = inngest.createFunction(
+    { id: "evaluate-practice", name: "Evaluate Practice" },
+    { event: "hired/practice.evaluate" },
     async ({ event, step }) => {
         const { sessionId } = event.data;
 
         const session = await step.run("fetch-session", async () => {
-            return await db.query.interviewSessions.findFirst({
-                where: eq(interviewSessions.id, sessionId),
+            return await db.query.practiceSessions.findFirst({
+                where: eq(practiceSessions.id, sessionId),
                 with: {
                     questions: true,
                 },
@@ -93,20 +93,20 @@ CRITICAL UI RULES:
         await step.run("save-evaluations", async () => {
             await db.transaction(async (tx) => {
                 for (const result of evaluationResults) {
-                    await tx.update(interviewQuestions)
+                    await tx.update(practiceQuestions)
                         .set({
                             isCorrect: result.isCorrect,
                             feedback: result.feedback,
                         })
-                        .where(eq(interviewQuestions.id, result.id));
+                        .where(eq(practiceQuestions.id, result.id));
                 }
 
-                await tx.update(interviewSessions)
+                await tx.update(practiceSessions)
                     .set({
                         status: "completed",
                         overallFeedback: overallFeedback
                     })
-                    .where(eq(interviewSessions.id, sessionId));
+                    .where(eq(practiceSessions.id, sessionId));
             });
         });
 
