@@ -26,6 +26,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import Image from "next/image";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 
 export type JobData = {
   id: number;
@@ -52,6 +54,11 @@ export type JobData = {
 
 export const JobCard = ({ job }: { job: JobData }) => {
   const queryClient = useQueryClient();
+  const router = useRouter();
+
+  const [creating, setCreating] = useState<"interview" | "practice" | null>(
+    null,
+  );
 
   const updateStatus = useMutation({
     mutationFn: async (newStatus: JobData["userJobRecord"]["status"]) => {
@@ -133,6 +140,54 @@ export const JobCard = ({ job }: { job: JobData }) => {
 
   const markUnapplied = () => {
     updateStatus.mutate("new");
+  };
+
+  const createPractice = async () => {
+    setCreating("practice");
+    try {
+      const res = await client.practice.sessions.post({
+        topics: [job.companyIndustry || job.jobTitle, job.company],
+        difficulty: "medium",
+        questionCount: 5,
+        durationMinutes: 30,
+      });
+
+      if (res.data) {
+        toast.success("Practice session created!");
+        router.push(`/practice/session/${res.data.sessionId}`);
+      } else {
+        toast.error("Failed to start session.");
+        setCreating(null);
+      }
+    } catch {
+      toast.error("An error occurred.");
+      setCreating(null);
+    }
+  };
+
+  const simulateInterview = async () => {
+    setCreating("interview");
+    try {
+      const res = await client.interview.sessions.post({
+        jobId: job.id,
+        jobRole: job.jobTitle,
+        jobDescription: `${job.jobTitle} at ${job.company}`,
+        interviewType: "technical",
+        difficulty: "medium",
+        durationMinutes: 30,
+      });
+
+      if (res.data) {
+        toast.success("Interview session created!");
+        router.push(`/interview/${res.data.interviewId}`);
+      } else {
+        toast.error("Failed to start session.");
+        setCreating(null);
+      }
+    } catch {
+      toast.error("An error occurred.");
+      setCreating(null);
+    }
   };
 
   const score =
@@ -378,6 +433,18 @@ export const JobCard = ({ job }: { job: JobData }) => {
                   {tailorMutation.isPending ? "Tailoring..." : "Tailor Resume"}
                 </DropdownMenuItem>
               )}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
+                onClick={simulateInterview}
+                disabled={!!creating}
+              >
+                {creating === "interview"
+                  ? "Starting..."
+                  : "Simulate Interview"}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={createPractice} disabled={!!creating}>
+                {creating === "practice" ? "Starting..." : "Create Practice"}
+              </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>

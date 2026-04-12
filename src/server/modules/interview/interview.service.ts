@@ -1,10 +1,11 @@
 import { db } from "@/db/drizzle";
 import { interviews } from "@/db/schema/interview-schema";
 import { getModel } from "@/lib/ai";
-import { generateText } from "ai";
+import { INTERVIEW_SYSTEM_PROMPT } from "@/lib/ai/prompts/system/interview.system.prompt";
+import { INTERVIEW_TASK_PROMPT } from "@/lib/ai/prompts/tasks/interview.task.prompt";
+import { generateText, Output } from "ai";
 import { eq } from "drizzle-orm";
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import z from "zod";
 
 type VapiMessage = {
   role: "user" | "assistant" | "system" | "tool";
@@ -15,25 +16,39 @@ type VapiMessage = {
   secondsFromStart: number;
 };
 
+const InterviewReportSchema = z.object({
+  overallScore: z.number().describe("Overall score out of 100"),
+  communicationScore: z.number().describe("Communication score out of 100"),
+  technicalScore: z.number().describe("Technical score out of 100"),
+  strengths: z.array(z.string()).describe("Strengths of the candidate"),
+  weaknesses: z.array(z.string()).describe("Weaknesses of the candidate"),
+  areasToImprove: z.array(z.string()).describe("Areas to improve"),
+  summary: z.string().describe("Summary of the interview"),
+});
+
 async function generateReport(
   jobRole: string,
   jobDescription: string,
+  interviewType: string,
+  difficulty: string,
   transcript: string
-): Promise<object> {
+): Promise<z.infer<typeof InterviewReportSchema>> {
   try {
-    const { text } = await generateText({
-      model: getModel("standard_2"),
-      system:
-        "You are an expert interview coach. Analyze the following interview transcript and return a JSON object with keys: overallScore (1-100), communicationScore (1-100), technicalScore (1-100), strengths (string[]), weaknesses (string[]), areasToImprove (string[]), summary (string). Return ONLY valid JSON, no markdown.",
-      prompt: `Job Role: ${jobRole ?? "General"}\n\nJob Description: ${jobDescription ?? "General"}\n\nTranscript:\n${transcript}`,
+    const { output } = await generateText({
+      model: getModel("standard"),
+      system: INTERVIEW_SYSTEM_PROMPT,
+      prompt: INTERVIEW_TASK_PROMPT(jobRole, jobDescription, interviewType, difficulty, transcript),
+      output: Output.object({
+        schema: InterviewReportSchema,
+      })
     });
 
-    return JSON.parse(text);
+    return output;
   } catch {
     return {
-      overallScore: null,
-      communicationScore: null,
-      technicalScore: null,
+      overallScore: 0,
+      communicationScore: 0,
+      technicalScore: 0,
       strengths: [],
       weaknesses: [],
       areasToImprove: [],
@@ -45,6 +60,7 @@ async function generateReport(
 export const InterviewService = {
   async createInterview(
     userId: string,
+    jobId: number | undefined,
     jobRole: string,
     jobDescription: string,
     interviewType: string,
@@ -55,12 +71,13 @@ export const InterviewService = {
       .insert(interviews)
       .values({
         userId,
+        jobId,
         jobRole,
         jobDescription,
         interviewType: interviewType ?? "technical",
         difficulty: difficulty ?? "medium",
         status: "in_progress",
-        durationMinutes
+        durationMinutes,
       })
       .returning();
 
@@ -87,6 +104,23 @@ export const InterviewService = {
     }
 
     return interview;
+  },
+
+  async updateInterviewStatus(id: string, userId: string, status: "processing" | "in_progress" | "completed" | "failed") {
+    const interview = await db.query.interviews.findFirst({
+      where: eq(interviews.id, id),
+    });
+
+    if (!interview || interview.userId !== userId) {
+      throw new Error("Interview not found or unauthorized");
+    }
+
+    await db
+      .update(interviews)
+      .set({ status })
+      .where(eq(interviews.id, id));
+
+    return { success: true };
   },
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -125,16 +159,22 @@ export const InterviewService = {
       return;
     }
 
-    // Generate AI report from transcript (only if there's content)
     const report =
       !failed && rawTranscript.length > 50
-        ? await generateReport(interview.jobRole!, interview.jobDescription!, rawTranscript)
+        ? await generateReport(
+          interview.jobRole!,
+          interview.jobDescription!,
+          interview.interviewType!,
+          interview.difficulty!,
+          rawTranscript
+        )
         : null;
 
     await db
       .update(interviews)
       .set({
         vapiCallId: call.id,
+        score: report?.overallScore,
         transcript: rawTranscript,
         messages: rawMessages,
         report,

@@ -10,7 +10,7 @@ import {
     Blockchain02Icon,
     GameController01Icon,
     Users,
-    AnalyticsUpIcon,
+    Link04Icon,
     BrushIcon,
     ChartLineData02Icon,
     UserAccountIcon,
@@ -156,7 +156,7 @@ export const TYPE_BADGE_STYLES: Record<string, string> = {
 
 export const ROLE_ICONS = [
     CodeIcon,
-    AnalyticsUpIcon,
+    Link04Icon,
     DatabaseIcon,
     BrushIcon,
     ChartLineData02Icon,
@@ -211,6 +211,12 @@ export const STATUS_CONFIG = {
         dot: "bg-blue-500 animate-pulse",
         className:
             "text-blue-700 bg-blue-50 dark:bg-blue-950/40 dark:text-blue-400",
+    },
+    processing: {
+        label: "Processing",
+        dot: "bg-orange-500 animate-pulse",
+        className:
+            "text-orange-700 bg-orange-50 dark:bg-orange-950/40 dark:text-orange-400",
     },
 };
 

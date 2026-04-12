@@ -203,7 +203,7 @@ export default function PracticeMainPage() {
                   </div>
                   <div className="col-span-2">
                     <span className="mr-1 font-medium">Created:</span>
-                    {new Intl.DateTimeFormat("en-US", {
+                    {new Intl.DateTimeFormat("en-IN", {
                       month: "short",
                       day: "numeric",
                       year: "numeric",

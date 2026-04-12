@@ -5,6 +5,7 @@ import { relations } from "drizzle-orm";
 
 export const interviewStatus = pgEnum("interview_status", [
     "in_progress",
+    "processing",
     "completed",
     "failed",
 ]);
@@ -47,3 +48,5 @@ export const interviewRelations = relations(interviews, ({ one }) => ({
         references: [jobs.id],
     }),
 }));
+
+export type Interview = typeof interviews.$inferSelect;
