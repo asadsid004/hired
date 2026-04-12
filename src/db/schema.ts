@@ -3,3 +3,4 @@ export * from "./schema/preferences-schema";
 export * from "./schema/resume-schema";
 export * from "./schema/jobs-schema";
 export * from "./schema/practice-schema";
+export * from "./schema/interview-schema";
