@@ -48,38 +48,56 @@
 }
 
 :root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.141 0.005 285.823);
+  /* Page background: very slightly warm off-white – not pure white */
+  --background: oklch(0.97 0.004 260);
+  --foreground: oklch(0.12 0.015 264);
+
+  /* Cards slightly lighter/whiter than background */
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.141 0.005 285.823);
+  --card-foreground: oklch(0.12 0.015 264);
+
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.141 0.005 285.823);
-  --primary: oklch(0.21 0.006 285.885);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.967 0.001 286.375);
-  --secondary-foreground: oklch(0.21 0.006 285.885);
-  --muted: oklch(0.967 0.001 286.375);
-  --muted-foreground: oklch(0.552 0.016 285.938);
-  --accent: oklch(0.967 0.001 286.375);
-  --accent-foreground: oklch(0.21 0.006 285.885);
+  --popover-foreground: oklch(0.12 0.015 264);
+
+  /* Primary: rich indigo so interactive elements feel distinct */
+  --primary: oklch(0.38 0.16 268);
+  --primary-foreground: oklch(0.99 0 0);
+
+  /* Secondary: light periwinkle tint for secondary surfaces */
+  --secondary: oklch(0.93 0.018 268);
+  --secondary-foreground: oklch(0.22 0.02 268);
+
+  /* Muted: a neutral but slightly tinted surface — gives visual depth */
+  --muted: oklch(0.93 0.008 264);
+  --muted-foreground: oklch(0.44 0.02 264);
+
+  /* Accent: soft indigo tint used for hover states */
+  --accent: oklch(0.91 0.022 268);
+  --accent-foreground: oklch(0.22 0.02 268);
+
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.92 0.004 286.32);
-  --input: oklch(0.92 0.004 286.32);
-  --ring: oklch(0.705 0.015 286.067);
+
+  /* Borders are clearly visible, not barely-there */
+  --border: oklch(0.82 0.01 264);
+  --input: oklch(0.82 0.01 264);
+  --ring: oklch(0.55 0.12 268);
+
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
   --chart-4: oklch(0.828 0.189 84.429);
   --chart-5: oklch(0.769 0.188 70.08);
   --radius: 0.45rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.141 0.005 285.823);
-  --sidebar-primary: oklch(0.21 0.006 285.885);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.967 0.001 286.375);
-  --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
-  --sidebar-border: oklch(0.92 0.004 286.32);
-  --sidebar-ring: oklch(0.705 0.015 286.067);
+
+  /* Sidebar */
+  --sidebar: oklch(0.96 0.006 264);
+  --sidebar-foreground: oklch(0.12 0.015 264);
+  --sidebar-primary: oklch(0.38 0.16 268);
+  --sidebar-primary-foreground: oklch(0.99 0 0);
+  --sidebar-accent: oklch(0.91 0.022 268);
+  --sidebar-accent-foreground: oklch(0.22 0.02 268);
+  --sidebar-border: oklch(0.82 0.01 264);
+  --sidebar-ring: oklch(0.55 0.12 268);
 }
 
 .dark {
