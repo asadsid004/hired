@@ -11,6 +11,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import Image from "next/image";
+import Link from "next/link";
 
 const features = [
   {
@@ -18,7 +19,8 @@ const features = [
     title: "Smart Job Discovery",
     description:
       "AI scans thousands of listings to surface roles that match your skills and ambitions — no noise, no guesswork.",
-    label: "DISCOVERY",
+    label: "DISCOVER",
+    href: "/jobs",
   },
   {
     icon: File02Icon,
@@ -26,6 +28,7 @@ const features = [
     description:
       "Job-specific suggestions to tailor your resume with the right keywords and phrasing that beat ATS filters.",
     label: "OPTIMIZE",
+    href: "/resume",
   },
   {
     icon: MicIcon,
@@ -33,6 +36,7 @@ const features = [
     description:
       "Practice with a realistic AI interviewer, receive real-time feedback on delivery, and review a full performance report.",
     label: "PRACTICE",
+    href: "/practice",
   },
   {
     icon: BrainIcon,
@@ -40,6 +44,7 @@ const features = [
     description:
       "Role-specific questions curated from real interview pools, with detailed scoring and improvement tips.",
     label: "PREPARE",
+    href: "/interview",
   },
 ];
 
@@ -54,7 +59,7 @@ export default function Home() {
           {/* Top line: tagline + description side by side */}
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-end md:gap-12">
             <div>
-              <p className="text-primary mb-6 text-sm font-medium tracking-[0.2em] uppercase">
+              <p className="text-primary dark:text-primary/80 mb-6 text-sm font-medium tracking-[0.2em] uppercase">
                 AI-Powered Career Platform
               </p>
               <h1 className="text-[clamp(3.5rem,6vw,4.5rem)] leading-[1.02] font-light tracking-tight md:text-[clamp(2.5rem,6vw,5.5rem)]">
@@ -112,18 +117,16 @@ export default function Home() {
 
       {/* ── Marquee / Ticker ── */}
       <section className="border-border/60 mt-12 border-y py-5 md:mt-24">
-        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-3 px-6 sm:grid-cols-3 md:grid-cols-6">
+        <div className="mx-auto grid max-w-7xl grid-cols-2 gap-y-3 px-6 sm:grid-cols-2 sm:text-center md:grid-cols-4">
           {[
             "JOB SEARCH",
             "RESUME BUILDING",
             "MOCK INTERVIEWS",
             "ATS OPTIMIZATION",
-            "CAREER INSIGHTS",
-            "AI COACHING",
           ].map((item) => (
             <span
               key={item}
-              className="text-muted-foreground/60 text-xs font-medium tracking-[0.15em]"
+              className="text-primary dark:text-primary/80 text-sm font-medium tracking-[0.15em]"
             >
               {item}
             </span>
@@ -137,7 +140,7 @@ export default function Home() {
           {/* Section header - editorial style */}
           <div className="mb-12 grid gap-5 md:mb-20">
             <div>
-              <p className="text-primary mb-4 text-sm font-medium tracking-[0.2em] uppercase">
+              <p className="text-primary dark:text-primary/80 mb-4 text-sm font-medium tracking-[0.2em] uppercase">
                 What we offer
               </p>
               <h2 className="text-4xl leading-[1.1] font-light tracking-tight md:text-5xl">
@@ -153,14 +156,14 @@ export default function Home() {
 
           {/* Feature grid - editorial bento */}
           <div className="border-border/70 bg-border/50 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border sm:grid-cols-2">
-            {features.map(({ icon: Icon, title, description, label }) => (
+            {features.map(({ icon: Icon, title, description, label, href }) => (
               <div
                 key={title}
                 className="group bg-card hover:bg-accent/40 flex flex-col justify-between p-8 transition-colors duration-300 md:p-10"
               >
                 <div>
                   <div className="mb-8 flex items-center justify-between">
-                    <span className="text-muted-foreground/50 text-[11px] font-medium tracking-[0.2em]">
+                    <span className="text-primary dark:text-primary/80 text-xs font-medium tracking-[0.2em]">
                       {label}
                     </span>
                     <div className="bg-foreground/5 text-foreground/70 group-hover:bg-foreground/10 flex h-10 w-10 items-center justify-center rounded-full transition-colors duration-300">
@@ -179,14 +182,17 @@ export default function Home() {
                   </p>
                 </div>
                 <div className="mt-8">
-                  <span className="text-foreground/40 group-hover:text-foreground/70 inline-flex items-center gap-2 text-xs font-medium transition-colors duration-300">
+                  <Link
+                    href={href}
+                    className="text-foreground/70 group-hover:text-foreground inline-flex items-center gap-2 text-sm font-medium transition-colors duration-300"
+                  >
                     Explore
                     <HugeiconsIcon
                       icon={ArrowRight02Icon}
                       strokeWidth={2}
                       className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1"
                     />
-                  </span>
+                  </Link>
                 </div>
               </div>
             ))}
@@ -213,7 +219,7 @@ export default function Home() {
 
             {/* Content */}
             <div className="order-1 md:order-2">
-              <p className="text-muted-foreground mb-4 text-xs font-medium tracking-[0.2em] uppercase">
+              <p className="text-primary dark:text-primary/80 mb-4 text-sm font-medium tracking-[0.2em] uppercase">
                 About
               </p>
               <h2 className="mb-6 text-3xl leading-[1.15] font-light tracking-tight md:text-4xl">
@@ -262,7 +268,7 @@ export default function Home() {
             />
             <div className="relative z-10 grid grid-cols-1 gap-10 md:grid-cols-2 md:items-center">
               <div>
-                <p className="mb-4 text-xs font-medium tracking-[0.2em] uppercase opacity-60">
+                <p className="mb-4 text-xs font-medium tracking-[0.2em] uppercase opacity-70">
                   Ready to start?
                 </p>
                 <h2 className="text-3xl leading-[1.1] font-extralight tracking-tight md:text-5xl">
@@ -276,7 +282,7 @@ export default function Home() {
                   they love — in half the time.
                 </p>
                 <SignInForm title="Get Started — It's Free" />
-                <p className="mt-4 text-xs opacity-40">
+                <p className="mt-4 text-xs opacity-70">
                   No credit card required · Cancel anytime
                 </p>
               </div>
