@@ -1,5 +1,5 @@
 import { groq } from '@ai-sdk/groq';
-import { cerebras } from '@ai-sdk/cerebras';
+import { openrouter } from '@openrouter/ai-sdk-provider';
 import { google } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 
@@ -12,9 +12,13 @@ export const models = {
 
     standard_2: google('gemma-4-31b-it'),
 
-    standard_3: groq('openai/gpt-oss-120b'),
+    standard_3: google('gemini-3-flash-preview'),
 
-    standard_4: cerebras('qwen-3-235b-a22b-instruct-2507'),
+    standard_4: groq('openai/gpt-oss-120b'),
+
+    standard_5: groq('meta-llama/llama-4-scout-17b-16e-instruct'),
+
+    standard_6: openrouter.chat('deepseek/deepseek-v4-flash'),
 } as const;
 
 export type ModelPreset = keyof typeof models;

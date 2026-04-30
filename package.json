@@ -14,7 +14,6 @@
     "inngest:dev": "npx --ignore-scripts=false inngest-cli@latest dev"
   },
   "dependencies": {
-    "@ai-sdk/cerebras": "^2.0.46",
     "@ai-sdk/google": "^3.0.23",
     "@ai-sdk/groq": "^3.0.36",
     "@aws-sdk/client-s3": "^3.980.0",
@@ -23,6 +22,7 @@
     "@hugeicons/core-free-icons": "^3.1.1",
     "@hugeicons/react": "^1.1.4",
     "@neondatabase/serverless": "^1.0.2",
+    "@openrouter/ai-sdk-provider": "^2.9.0",
     "@radix-ui/react-dialog": "^1.1.15",
     "@react-pdf/renderer": "^4.3.2",
     "@react-three/drei": "^10.7.7",

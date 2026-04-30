@@ -3,7 +3,7 @@ import { db } from "@/db/drizzle";
 import { jobs, userJobs } from "@/db/schema/jobs-schema";
 import { eq, and, isNull } from "drizzle-orm";
 import { generateText, Output } from "ai";
-import { getModel } from "@/lib/ai";
+import { getModel, ModelPreset } from "@/lib/ai";
 import { ParsedJobDescriptionSchema } from "@/lib/ai/schemas/job-description.schema";
 import { JOB_DESCRIPTION_PARSING_SYSTEM_PROMPT } from "@/lib/ai/prompts/system/job.system.prompt";
 import { buildJobDescriptionParsingPrompt } from "@/lib/ai/prompts/tasks/job.task.prompt";
@@ -49,11 +49,16 @@ export const parseJobDescriptions = inngest.createFunction(
         // 2. Process each job individually
         // Using separate steps ensures that if the function times out, 
         // it resumes from the exact job it failed on.
-        for (const job of unparsedJobs) {
+        const modelPresets: ModelPreset[] = ["standard_3", "standard_5", "standard_4", "standard_6"];
+
+        for (let i = 0; i < unparsedJobs.length; i++) {
+            const job = unparsedJobs[i];
+            const preset = modelPresets[Math.floor(i / 4) % modelPresets.length];
+
             await step.run(`parse-job-${job.id}`, async () => {
                 try {
                     const { output } = await generateText({
-                        model: getModel("standard_4"),
+                        model: getModel(preset),
                         system: JOB_DESCRIPTION_PARSING_SYSTEM_PROMPT,
                         prompt: buildJobDescriptionParsingPrompt({
                             jobTitle: job.jobTitle,

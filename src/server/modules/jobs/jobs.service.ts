@@ -62,6 +62,7 @@ export const JobsService = {
 
         const locationArray = Object.values(locationIds).map(id => ({ id }));
         const body = JSON.stringify({
+            "limit": 20,
             "job_title_or": preferences.role,
             "employment_statuses_or": [preferences.type.replace("-", "_")],
             "remote": ["remote", "hybrid"].includes(preferences.mode),
