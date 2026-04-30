@@ -6,6 +6,7 @@ import { jobs } from '@/db/schema/jobs-schema';
 import { user as userTable } from '@/db/schema/auth-schema';
 import { eq, and, desc, getTableColumns } from 'drizzle-orm';
 import { resumeService } from './resume.service';
+import { ParsedJobDescription } from '@/lib/ai/schemas/job-description.schema';
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const { embedding, ...resumeColumnsWithoutEmbedding } = getTableColumns(resume);
@@ -84,11 +85,18 @@ export const resumeRoutes = new Elysia({ prefix: '/resume' })
             throw new Error("No profile found. Please complete onboarding first.");
         }
 
+        let parsedDescription: ParsedJobDescription | undefined;
+        if (jobId) {
+            const [job] = await db.select({ parsedDescription: jobs.parsedDescription }).from(jobs).where(eq(jobs.id, jobId));
+            if (job) parsedDescription = job.parsedDescription as ParsedJobDescription;
+        }
+
         // Tailor resume from user profile
         const tailoredData = await resumeService.tailorResume(
             userData.profile,
             jobTitle,
-            jobDescription
+            jobDescription,
+            parsedDescription
         );
 
         // If jobId provided, check if a tailored resume already exists for this job
@@ -265,10 +273,17 @@ export const resumeRoutes = new Elysia({ prefix: '/resume' })
             throw new Error("Resume data not found");
         }
 
+        let parsedDescription: ParsedJobDescription | undefined;
+        if (currentResume.jobId) {
+            const [job] = await db.select({ parsedDescription: jobs.parsedDescription }).from(jobs).where(eq(jobs.id, currentResume.jobId));
+            if (job) parsedDescription = job.parsedDescription as ParsedJobDescription;
+        }
+
         const tailoredData = await resumeService.tailorResume(
             currentResume.data,
             jobTitle,
-            jobDescription
+            jobDescription,
+            parsedDescription
         );
 
         const updated = await db

@@ -1,4 +1,5 @@
 import { JobPreferenceInsert } from "@/db/schema";
+import type { ParsedJobDescription } from "../../schemas/job-description.schema";
 
 interface ResumeExtractionInput {
    text: string;
@@ -362,16 +363,21 @@ Provide specific, actionable feedback that helps this candidate optimize their r
 export function buildTailorResumePrompt(
    resumeData: string,
    jobTitle: string,
-   jobDescription: string
+   jobDescription: string,
+   parsedDescription?: ParsedJobDescription
 ): string {
+   const parsedDescText = parsedDescription
+      ? `\n## Parsed Job Requirements (Structured):\n\`\`\`json\n${JSON.stringify(parsedDescription, null, 2)}\n\`\`\`\n`
+      : '';
+
    return `# Resume Tailoring Task
 
 ## Target Position:
 **${jobTitle}**
 
-## Job Description:
+## Job Description (Raw):
 ${jobDescription}
-
+${parsedDescText}
 ---
 
 ## Original Resume Data:
@@ -382,14 +388,14 @@ ${resumeData}
 ---
 
 ## Instructions:
-1. Analyze the job description to identify key requirements, skills, and keywords
-2. Review the candidate's current resume data
+1. Analyze the job description (and parsed requirements if provided) to identify key requirements, skills, and keywords.
+2. Review the candidate's current resume data.
 3. Tailor the resume following the system prompt rules:
-   - Keep all factual information unchanged
-   - Reframe experience and project descriptions to highlight relevant aspects
-   - Adjust skills to better match requirements (within 50% flexibility)
-   - Remove or minimize personal summary unless already substantial
-4. Return the complete tailored resume as valid JSON matching the ResumeProfile schema
+   - Keep all factual information unchanged.
+   - Reframe experience and project descriptions to highlight relevant aspects.
+   - Adjust skills to better match requirements (within 50% flexibility). If the parsed requirements list missing skills, you may add them ONLY if they are logically related to the candidate's existing experience and won't decrease trust (e.g. do not hallucinate highly specialized skills unless foundational ones are present).
+   - Remove or minimize personal summary unless already substantial.
+4. Return the complete tailored resume as valid JSON matching the ResumeProfile schema.
 
 ## Expected Output:
 Return ONLY the tailored JSON object. No explanations, no markdown code blocks, just the raw JSON.`;

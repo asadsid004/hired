@@ -27,6 +27,7 @@ import {
     SectionAnalysisSchema,
     SemanticAnalysisSchema,
 } from "@/lib/ai/schemas/resume.schema";
+import type { ParsedJobDescription } from "@/lib/ai/schemas/job-description.schema";
 
 export const resumeService = {
     async parse(file: File) {
@@ -155,11 +156,11 @@ export const resumeService = {
 
         return output;
     },
-    async tailorResume(resumeData: ResumeProfile, jobTitle: string, jobDescription: string) {
+    async tailorResume(resumeData: ResumeProfile, jobTitle: string, jobDescription: string, parsedDescription?: ParsedJobDescription) {
         const { output } = await generateText({
             model: getModel(),
             system: TAILOR_RESUME_SYSTEM_PROMPT,
-            prompt: buildTailorResumePrompt(JSON.stringify(resumeData), jobTitle, jobDescription),
+            prompt: buildTailorResumePrompt(JSON.stringify(resumeData), jobTitle, jobDescription, parsedDescription),
             output: Output.object({
                 schema: ResumeProfileSchema,
             }),
