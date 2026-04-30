@@ -14,7 +14,9 @@
     "inngest:dev": "npx --ignore-scripts=false inngest-cli@latest dev"
   },
   "dependencies": {
+    "@ai-sdk/cerebras": "^2.0.46",
     "@ai-sdk/google": "^3.0.23",
+    "@ai-sdk/groq": "^3.0.36",
     "@aws-sdk/client-s3": "^3.980.0",
     "@aws-sdk/s3-request-presigner": "^3.980.0",
     "@elysiajs/eden": "^1.4.6",

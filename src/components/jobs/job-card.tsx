@@ -1,5 +1,7 @@
 "use client";
 
+import type { ParsedJobDescription } from "@/lib/ai/schemas/job-description.schema";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { client } from "@/lib/client";
 import { cn } from "@/lib/utils";
@@ -12,7 +14,7 @@ import {
   MoreVerticalCircle01Icon,
   Tick01Icon,
   UserEdit01Icon,
-  Building04Icon,
+  House01Icon,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -46,6 +48,7 @@ export type JobData = {
   companyIndustry?: string | null;
   url: string;
   tailoredResumeId?: string | null;
+  parsedDescription?: ParsedJobDescription | null;
   userJobRecord: {
     status: "new" | "viewed" | "saved" | "applied" | "hidden" | "rejected";
     relevanceScore: string | null | number;
@@ -226,29 +229,76 @@ export const JobCard = ({ job }: { job: JobData }) => {
     return "Full-time";
   };
 
+  const scoreColor =
+    score >= 80
+      ? "border-l-emerald-500"
+      : score >= 60
+        ? "border-l-amber-500"
+        : "border-l-muted-foreground/30";
+
+  const scoreBgColor =
+    score >= 80
+      ? "bg-emerald-100/50 dark:bg-emerald-950/40"
+      : score >= 60
+        ? "bg-amber-100/50 dark:bg-amber-950/40"
+        : "bg-red-100/50 dark:bg-red-950/40";
+
+  const strokeColor =
+    score >= 80
+      ? "text-emerald-500"
+      : score >= 60
+        ? "text-amber-500"
+        : "text-red-500";
+
+  const strokeSecondaryColor =
+    score >= 80
+      ? "text-emerald-100/50"
+      : score >= 60
+        ? "text-amber-100/50"
+        : "text-red-100/50";
+
+  const borderColor =
+    score >= 80
+      ? "border-emerald-500/50"
+      : score >= 60
+        ? "border-amber-500/50"
+        : "border-red-500/50";
+
+  const techPills =
+    job.parsedDescription?.techStack ??
+    (job as unknown as { technologySlugs?: string[] }).technologySlugs ??
+    [];
+
   return (
-    <div className="bg-card flex flex-col gap-6 rounded-md border p-5 transition-all hover:shadow-md md:flex-row">
+    <div
+      className={cn(
+        "bg-card flex flex-col gap-6 rounded-md border border-l-[3px] p-5 transition-all hover:shadow-md md:flex-row",
+        scoreColor,
+      )}
+    >
       <div className="flex-1 space-y-4">
         <div className="flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white">
+          <div className="flex h-21 w-21 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white">
             {job.companyLogo ? (
               <Image
                 src={job.companyLogo}
                 alt={job.company}
                 className="h-full w-full object-contain p-1"
-                width={56}
-                height={56}
+                width={100}
+                height={100}
               />
             ) : (
               <HugeiconsIcon
-                icon={Building04Icon}
+                icon={House01Icon}
                 className="text-muted-foreground"
+                size={30}
+                strokeWidth={2}
               />
             )}
           </div>
           <div>
             {job.datePosted && (
-              <span className="mb-2 inline-block rounded bg-emerald-500/10 px-2 py-0.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
+              <span className="mb-2 inline-block rounded bg-emerald-500/10 px-2 py-1 text-xs font-medium text-emerald-600 dark:text-emerald-400">
                 {getDaysAgo(job.datePosted)}
               </span>
             )}
@@ -312,37 +362,61 @@ export const JobCard = ({ job }: { job: JobData }) => {
             <span>{getWorkMode()}</span>
           </div>
         </div>
+
+        {/* Tech Stack Pills */}
+        {techPills.length > 0 && (
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="text-muted-foreground text-sm font-medium">
+              Technologies:
+            </span>
+            {techPills.slice(0, 9).map((tech) => (
+              <span
+                key={tech}
+                className="bg-secondary text-secondary-foreground rounded-full px-2 py-1 text-[0.8rem] font-medium"
+              >
+                {tech.replace(/-/g, " ")}
+              </span>
+            ))}
+            {techPills.length > 9 && (
+              <span className="text-muted-foreground text-[0.8rem]">
+                +{techPills.length - 9} more
+              </span>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Right side: Score & Actions */}
       <div className="flex shrink-0 flex-col items-center justify-between space-y-4 border-t pt-4 sm:items-end md:w-56 md:border-t-0 md:border-l md:pt-0 md:pl-6">
-        <div className="flex w-full flex-col items-center rounded-md bg-emerald-100/50 p-4 dark:bg-emerald-950/40">
-          <div className="relative mb-2 h-16 w-16">
+        <div
+          className={`flex h-full w-full flex-col items-center justify-center rounded-md ${scoreBgColor} border ${borderColor} `}
+        >
+          <div className="relative h-18 w-18">
             <svg className="h-full w-full" viewBox="0 0 36 36">
               <path
-                className="text-emerald-500/20"
+                className={`${strokeSecondaryColor}`}
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="3"
               />
               <path
-                className="text-emerald-500"
+                className={strokeColor}
                 strokeDasharray={`${score}, 100`}
                 d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                 fill="none"
                 stroke="currentColor"
-                strokeWidth="3"
+                strokeWidth="3.3"
                 strokeLinecap="round"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="text-sm font-semibold text-emerald-600 dark:text-emerald-400">
+              <span className={`text-lg font-semibold ${strokeColor}`}>
                 {score}%
               </span>
             </div>
           </div>
-          <p className="text-xs font-semibold text-emerald-600 uppercase dark:text-emerald-400">
+          <p className={`text-sm font-semibold uppercase ${strokeColor}`}>
             {score >= 80
               ? "Strong Match"
               : score >= 60
@@ -350,7 +424,6 @@ export const JobCard = ({ job }: { job: JobData }) => {
                 : "Fair Match"}
           </p>
         </div>
-
         {/* Action Buttons */}
         <div className="mt-auto flex w-full items-center gap-2">
           {isApplied ? (

@@ -161,10 +161,8 @@ export const JobsService = {
             } else {
                 const descLower = job.description.toLowerCase();
                 matchedSkills = userSkills.filter((skill) => {
-                    const regex = new RegExp(
-                        `\\b${skill.replace(/[.*+?^$\\{}()|[\\]\\\\]/g, "\\\\$&")}\\b`,
-                        "i",
-                    );
+                    const escaped = skill.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+                    const regex = new RegExp(`(?:^|[^a-zA-Z0-9])${escaped}(?![a-zA-Z0-9])`, "i");
                     return regex.test(descLower);
                 });
             }

@@ -8,21 +8,25 @@ import Link from "next/link";
 import Image from "next/image";
 import ReactMarkdown from "react-markdown";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import type { ParsedJobDescription } from "@/lib/ai/schemas/job-description.schema";
 import {
   ArrowLeft01Icon,
   Bookmark02Icon,
   Building04Icon,
   Location01Icon,
-  Money01Icon,
   Clock01Icon,
   Briefcase02Icon,
   MoreVerticalCircle01Icon,
   Tick01Icon,
-  UserEdit01Icon,
-  GlobalIcon,
-  UserGroupIcon,
   Calendar01Icon,
   Linkedin01Icon,
+  Money01Icon,
+  UserEdit01Icon,
+  CheckmarkBadge01Icon,
+  Linkedin02FreeIcons,
+  UserIcon,
+  Close,
 } from "@hugeicons/core-free-icons";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -74,7 +78,18 @@ export type DetailedJobData = {
   easyApply?: boolean | null;
   technologySlugs?: string[] | null;
 
+  parsedDescription?: ParsedJobDescription | null;
   tailoredResumeId?: string | null;
+
+  userSkills?: {
+    languages?: string[];
+    frameworks?: string[];
+    mlAndAi?: string[];
+    devops?: string[];
+    databases?: string[];
+    tools?: string[];
+    other?: string[];
+  } | null;
 
   userJobRecord: {
     status: "new" | "viewed" | "saved" | "applied" | "hidden" | "rejected";
@@ -101,7 +116,7 @@ export default function JobDetailPage() {
     error,
   } = useQuery<DetailedJobData>({
     queryKey: ["jobs", jobId],
-    staleTime: 1000 * 60 * 10, // 10 minutes
+    staleTime: 1000 * 60 * 10,
     queryFn: async () => {
       const res = await client.jobs({ id: jobId }).get();
       if (!res.data || res.error) throw new Error("Failed to load job details");
@@ -230,20 +245,50 @@ export default function JobDetailPage() {
         job.employmentStatuses[0].replace("_", " ").slice(1)
       : "Full-time";
 
-  const matchReasonsList =
-    job.userJobRecord.matchReasons &&
-    Array.isArray(job.userJobRecord.matchReasons)
-      ? job.userJobRecord.matchReasons
-      : [];
-
   const companyUrl = job.companyDomain
     ? job.companyDomain.startsWith("http")
       ? job.companyDomain
       : `https://${job.companyDomain}`
     : "#";
 
+  const userSkillsList = job.userSkills
+    ? [
+        ...(job.userSkills.languages || []),
+        ...(job.userSkills.frameworks || []),
+        ...(job.userSkills.mlAndAi || []),
+        ...(job.userSkills.devops || []),
+        ...(job.userSkills.databases || []),
+        ...(job.userSkills.tools || []),
+        ...(job.userSkills.other || []),
+      ].map((s) => s.toLowerCase())
+    : [];
+
+  const mustHaveSkills = job.parsedDescription?.mustHaveSkills || [];
+  const niceToHaveSkills = job.parsedDescription?.niceToHaveSkills || [];
+
+  const matchedSkills = mustHaveSkills.filter((skill) =>
+    userSkillsList.some(
+      (us) =>
+        us === skill.toLowerCase() ||
+        us.includes(skill.toLowerCase()) ||
+        skill.toLowerCase().includes(us),
+    ),
+  );
+
+  const missingSkills = mustHaveSkills.filter(
+    (skill) => !matchedSkills.includes(skill),
+  );
+
+  const techStack =
+    job.parsedDescription?.techStack &&
+    job.parsedDescription.techStack.length > 0
+      ? job.parsedDescription.techStack
+      : job.technologySlugs
+        ? job.technologySlugs.map((t) => t.replace(/-/g, " "))
+        : [];
+
   return (
-    <div className="mx-auto max-w-360 space-y-6 pt-4 pb-12">
+    <div className="mx-auto max-w-6xl space-y-6 pt-6 pb-12">
       <Link href="/jobs" className={buttonVariants({ variant: "ghost" })}>
         <HugeiconsIcon
           icon={ArrowLeft01Icon}
@@ -256,13 +301,13 @@ export default function JobDetailPage() {
       <div className="bg-card flex flex-col gap-6 rounded-md border p-6">
         <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
           <div className="flex flex-1 items-start gap-5">
-            <div className="flex h-16 w-16 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white p-1">
+            <div className="flex h-20 w-20 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white p-1">
               {job.companyLogo ? (
                 <Image
                   src={job.companyLogo}
                   alt={job.company}
-                  width={64}
-                  height={64}
+                  width={150}
+                  height={150}
                   className="h-full w-full object-contain"
                 />
               ) : (
@@ -273,53 +318,13 @@ export default function JobDetailPage() {
                 />
               )}
             </div>
-            <div className="flex flex-col gap-1">
-              <h1 className="text-2xl font-bold tracking-tight">
+            <div className="flex flex-col gap-2">
+              <h1 className="text-4xl font-extrabold tracking-tight">
                 {job.jobTitle}
               </h1>
-              <div className="text-muted-foreground mt-1 flex flex-wrap items-center gap-2 text-sm">
-                <span className="text-foreground font-medium">
-                  {job.company}
-                </span>
-
-                {job.companyDomain && (
-                  <>
-                    <span className="opacity-50">•</span>
-                    <a
-                      href={companyUrl}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="hover:text-foreground flex items-center gap-1.5 transition-colors"
-                    >
-                      <HugeiconsIcon
-                        icon={GlobalIcon}
-                        className="h-4 w-4"
-                        strokeWidth={2}
-                      />
-                      {job.companyDomain}
-                    </a>
-                  </>
-                )}
-                {job.companyEmployeeCount && (
-                  <>
-                    <span className="opacity-50">•</span>
-                    <span className="flex items-center gap-1.5">
-                      <HugeiconsIcon
-                        icon={UserGroupIcon}
-                        className="h-4 w-4"
-                        strokeWidth={2}
-                      />
-                      {job.companyEmployeeCount}+ employees
-                    </span>
-                  </>
-                )}
-                {job.companyIndustry && (
-                  <>
-                    <span className="opacity-50">•</span>
-                    <span>{job.companyIndustry}</span>
-                  </>
-                )}
-              </div>
+              <span className="text-foreground text-lg font-medium">
+                {job.company}
+              </span>
             </div>
           </div>
 
@@ -339,7 +344,11 @@ export default function JobDetailPage() {
                   Applied
                 </Button>
               ) : (
-                <Button variant="default" className="lg:w-32" asChild>
+                <Button
+                  variant="default"
+                  className="font-semibold lg:w-36"
+                  asChild
+                >
                   <Link
                     href={job.url}
                     target="_blank"
@@ -377,320 +386,503 @@ export default function JobDetailPage() {
                     />
                   </Button>
                 </DropdownMenuTrigger>
-                {isApplied ? (
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={markUnapplied}>
-                      Mark as Unapplied
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {hasTailored ? (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/resume/${job.tailoredResumeId}`}>
-                            View Tailored Resume
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => tailorMutation.mutate()}
-                          disabled={tailorMutation.isPending}
-                        >
-                          {tailorMutation.isPending
-                            ? "Re-tailoring..."
-                            : "Re-tailor Resume"}
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
+                <DropdownMenuContent align="end" className="w-48">
+                  {isApplied ? (
+                    <>
+                      <DropdownMenuItem onClick={markUnapplied}>
+                        Mark as Unapplied
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  ) : (
+                    <>
+                      <DropdownMenuItem onClick={markApplied}>
+                        Mark as Applied
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                    </>
+                  )}
+                  {hasTailored ? (
+                    <>
+                      <DropdownMenuItem asChild>
+                        <Link href={`/resume/${job.tailoredResumeId}`}>
+                          View Tailored Resume
+                        </Link>
+                      </DropdownMenuItem>
                       <DropdownMenuItem
                         onClick={() => tailorMutation.mutate()}
                         disabled={tailorMutation.isPending}
                       >
                         {tailorMutation.isPending
-                          ? "Tailoring..."
-                          : "Tailor Resume"}
+                          ? "Re-tailoring..."
+                          : "Re-tailor Resume"}
                       </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                ) : (
-                  <DropdownMenuContent align="end" className="w-48">
-                    <DropdownMenuItem onClick={markApplied}>
-                      Mark as Applied
+                    </>
+                  ) : (
+                    <DropdownMenuItem
+                      onClick={() => tailorMutation.mutate()}
+                      disabled={tailorMutation.isPending}
+                    >
+                      {tailorMutation.isPending
+                        ? "Tailoring..."
+                        : "Tailor Resume"}
                     </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {hasTailored ? (
-                      <>
-                        <DropdownMenuItem asChild>
-                          <Link href={`/resume/${job.tailoredResumeId}`}>
-                            View Tailored Resume
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          onClick={() => tailorMutation.mutate()}
-                          disabled={tailorMutation.isPending}
-                        >
-                          {tailorMutation.isPending
-                            ? "Re-tailoring..."
-                            : "Re-tailor Resume"}
-                        </DropdownMenuItem>
-                      </>
-                    ) : (
-                      <DropdownMenuItem
-                        onClick={() => tailorMutation.mutate()}
-                        disabled={tailorMutation.isPending}
-                      >
-                        {tailorMutation.isPending
-                          ? "Tailoring..."
-                          : "Tailor Resume"}
-                      </DropdownMenuItem>
-                    )}
-                  </DropdownMenuContent>
-                )}
+                  )}
+                </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </div>
-
-        <div className="mt-4 flex flex-wrap items-center gap-x-8 gap-y-4 text-sm">
-          <div className="text-muted-foreground flex items-center gap-2.5">
-            <HugeiconsIcon
-              icon={Location01Icon}
-              strokeWidth={2}
-              className="h-4.5 w-4.5"
-            />
-            <span>{job.location || "Location not specified"}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2.5">
-            <HugeiconsIcon
-              icon={Money01Icon}
-              strokeWidth={2}
-              className="h-4.5 w-4.5"
-            />
-            <span>{formattedSalary}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2.5">
-            <HugeiconsIcon
-              icon={UserEdit01Icon}
-              strokeWidth={2}
-              className="h-4.5 w-4.5"
-            />
-            <span>{getSeniority()}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2.5">
-            <HugeiconsIcon
-              icon={Clock01Icon}
-              strokeWidth={2}
-              className="h-4.5 w-4.5"
-            />
-            <span>{getEmploymentType()}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2.5">
-            <HugeiconsIcon
-              icon={Briefcase02Icon}
-              strokeWidth={2}
-              className="h-4.5 w-4.5"
-            />
-            <span>{getWorkMode()}</span>
-          </div>
-        </div>
       </div>
 
-      <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
-        {/* Main Content: Description */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+        {/* Main Content */}
         <div className="space-y-6 md:col-span-2">
-          <div className="bg-card rounded-md border p-6">
-            <h2 className="mb-4 text-xl font-semibold">Job Description</h2>
-            <div className="prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:text-foreground prose-h1:text-lg prose-h2:text-base prose-h3:text-base prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-li:marker:text-muted-foreground max-w-none whitespace-pre-wrap">
-              <ReactMarkdown
-                components={{
-                  h1: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-8 mb-3 block text-lg font-bold"
-                      {...props}
-                    />
-                  ),
-                  h2: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-6 mb-3 block text-base font-bold"
-                      {...props}
-                    />
-                  ),
-                  h3: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-5 mb-2 block text-base font-bold"
-                      {...props}
-                    />
-                  ),
-                  h4: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-4 mb-2 block font-semibold"
-                      {...props}
-                    />
-                  ),
-                  h5: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-4 mb-2 block font-semibold"
-                      {...props}
-                    />
-                  ),
-                  h6: ({ ...props }) => (
-                    <strong
-                      className="text-foreground mt-4 mb-2 block font-semibold"
-                      {...props}
-                    />
-                  ),
-                  a: ({ ...props }) => (
-                    <a
-                      className="text-primary font-medium hover:underline"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      {...props}
-                    />
-                  ),
-                  ul: ({ ...props }) => (
-                    <ul className="mb-4 list-disc space-y-1 pl-5" {...props} />
-                  ),
-                  ol: ({ ...props }) => (
-                    <ol
-                      className="mb-4 list-decimal space-y-1 pl-5"
-                      {...props}
-                    />
-                  ),
-                  p: ({ ...props }) => <p className="mb-4" {...props} />,
-                }}
-              >
-                {job.description || "No description provided."}
-              </ReactMarkdown>
-            </div>
-
-            {job.technologySlugs && job.technologySlugs.length > 0 && (
-              <div className="mt-8 border-t pt-6">
-                <h3 className="mb-4 text-base font-semibold">
-                  Required Technologies
-                </h3>
-                <div className="flex flex-wrap gap-2">
-                  {job.technologySlugs.map((tech) => (
+          {/* Required Technologies */}
+          {techStack.length > 0 && (
+            <div className="bg-card rounded-md border p-6">
+              <h3 className="mb-4 text-sm font-bold tracking-wider uppercase">
+                Required Technologies
+              </h3>
+              <div className="flex flex-wrap gap-2">
+                {techStack.map((tech) => {
+                  const hasSkill = userSkillsList.some(
+                    (us) =>
+                      us === tech.toLowerCase() ||
+                      us.includes(tech.toLowerCase()) ||
+                      tech.toLowerCase().includes(us),
+                  );
+                  return (
                     <span
                       key={tech}
-                      className="bg-secondary text-secondary-foreground rounded-md px-2.5 py-1 text-xs font-medium capitalize"
-                    >
-                      {tech.replace(/-/g, " ")}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Sidebar: Match Info & Extra Data */}
-        <div className="space-y-6 md:col-span-1">
-          <div className="bg-card rounded-md border p-6">
-            <h3 className="text-muted-foreground mb-4 text-xs font-bold tracking-wider uppercase">
-              Job Overview
-            </h3>
-            <div className="space-y-4 text-sm">
-              {job.datePosted && (
-                <div className="flex items-start gap-3">
-                  <HugeiconsIcon
-                    icon={Calendar01Icon}
-                    className="text-muted-foreground mt-0.5 h-4.5 w-4.5 shrink-0"
-                    strokeWidth={2}
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-medium">Posted on</span>
-                    <span className="text-muted-foreground">
-                      {new Date(job.datePosted).toLocaleDateString(undefined, {
-                        year: "numeric",
-                        month: "long",
-                        day: "numeric",
-                      })}
-                    </span>
-                  </div>
-                </div>
-              )}
-              {job.reposted && job.dateReposted && (
-                <div className="flex items-start gap-3">
-                  <HugeiconsIcon
-                    icon={Calendar01Icon}
-                    className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-500"
-                    strokeWidth={2}
-                  />
-                  <div className="flex flex-col gap-0.5">
-                    <span className="font-medium text-emerald-600 dark:text-emerald-400">
-                      Reposted
-                    </span>
-                    <span className="text-muted-foreground">
-                      {new Date(job.dateReposted).toLocaleDateString(
-                        undefined,
-                        { year: "numeric", month: "long", day: "numeric" },
+                      className={cn(
+                        "flex items-center rounded-md border px-3 py-1.5 text-sm font-bold transition-colors",
+                        hasSkill
+                          ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                          : "bg-secondary text-secondary-foreground border-transparent",
                       )}
+                    >
+                      {hasSkill && (
+                        <HugeiconsIcon
+                          icon={CheckmarkBadge01Icon}
+                          className="mr-1.5 h-5 w-5"
+                          strokeWidth={2}
+                        />
+                      )}
+                      {tech}
                     </span>
-                  </div>
-                </div>
-              )}
-              {job.easyApply && (
-                <div className="flex items-center gap-3">
-                  <HugeiconsIcon
-                    icon={Tick01Icon}
-                    className="h-4.5 w-4.5 shrink-0 text-blue-500"
-                    strokeWidth={2}
-                  />
-                  <span className="font-medium text-blue-600 dark:text-blue-400">
-                    Easy Apply Available
-                  </span>
-                </div>
-              )}
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
-              {(job.hiringTeamFirstName || job.hiringTeamLastName) && (
-                <div className="flex items-start gap-3 pt-2">
-                  <HugeiconsIcon
-                    icon={UserEdit01Icon}
-                    className="text-muted-foreground mt-0.5 h-4.5 w-4.5 shrink-0"
-                    strokeWidth={2}
-                  />
-                  <div className="flex flex-col gap-1">
-                    <span className="font-medium">Hiring Team</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-muted-foreground">
-                        {job.hiringTeamFirstName} {job.hiringTeamLastName}
+          <div className="bg-card rounded-md border p-6">
+            <Tabs
+              defaultValue={job.parsedDescription ? "overview" : "description"}
+            >
+              <TabsList variant="line" className="mb-6 w-full justify-start">
+                {job.parsedDescription && (
+                  <>
+                    <TabsTrigger
+                      className="cursor-pointer font-bold uppercase"
+                      value="overview"
+                    >
+                      Overview
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="cursor-pointer font-bold uppercase"
+                      value="requirements"
+                    >
+                      Requirements
+                    </TabsTrigger>
+                    <TabsTrigger
+                      className="cursor-pointer font-bold uppercase"
+                      value="benefits"
+                    >
+                      Benefits
+                    </TabsTrigger>
+                  </>
+                )}
+                <TabsTrigger
+                  className="cursor-pointer font-bold uppercase"
+                  value="description"
+                >
+                  Full Description
+                </TabsTrigger>
+              </TabsList>
+
+              {/* Overview Tab */}
+              {job.parsedDescription && (
+                <TabsContent value="overview" className="space-y-8">
+                  {/* Grid of details */}
+                  <div className="bg-muted/30 grid grid-cols-2 gap-6 rounded-md border p-4 font-semibold md:grid-cols-3">
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-muted-foreground flex items-center gap-1.5">
+                        <HugeiconsIcon
+                          icon={Location01Icon}
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                        <span className="text-xs uppercase">Location</span>
+                      </div>
+                      <span className="text-[1rem]">
+                        {job.location || "Not specified"}
                       </span>
-                      {job.hiringTeamLinkedinUrl && (
-                        <a
-                          href={job.hiringTeamLinkedinUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:text-primary/80"
-                          title="LinkedIn Profile"
-                        >
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-muted-foreground flex items-center gap-1.5">
+                        <HugeiconsIcon
+                          icon={Briefcase02Icon}
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                        <span className="text-xs uppercase">Mode</span>
+                      </div>
+                      <span className="text-[1rem]">{getWorkMode()}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-muted-foreground flex items-center gap-1.5">
+                        <HugeiconsIcon
+                          icon={Money01Icon}
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                        <span className="text-xs uppercase">Salary</span>
+                      </div>
+                      <span className="text-[1rem]">{formattedSalary}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-muted-foreground flex items-center gap-1.5">
+                        <HugeiconsIcon
+                          icon={UserEdit01Icon}
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                        <span className="text-xs uppercase">Level</span>
+                      </div>
+                      <span className="text-[1rem]">{getSeniority()}</span>
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="text-muted-foreground flex items-center gap-1.5">
+                        <HugeiconsIcon
+                          icon={Clock01Icon}
+                          className="h-4 w-4"
+                          strokeWidth={2}
+                        />
+                        <span className="text-xs uppercase">Type</span>
+                      </div>
+                      <span className="text-[1rem]">{getEmploymentType()}</span>
+                    </div>
+                    {job.datePosted && (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="text-muted-foreground flex items-center gap-1.5">
                           <HugeiconsIcon
-                            icon={Linkedin01Icon}
+                            icon={Calendar01Icon}
                             className="h-4 w-4"
                             strokeWidth={2}
                           />
-                        </a>
-                      )}
-                    </div>
+                          <span className="text-xs uppercase">Posted On</span>
+                        </div>
+                        <span className="text-[1rem]">
+                          {new Date(job.datePosted).toLocaleDateString(
+                            "en-GB",
+                            {
+                              year: "numeric",
+                              month: "short",
+                              day: "numeric",
+                            },
+                          )}
+                        </span>
+                      </div>
+                    )}
+                    {job.easyApply && (
+                      <div className="flex flex-col gap-1.5">
+                        <div className="text-muted-foreground flex items-center gap-1.5">
+                          <HugeiconsIcon
+                            icon={CheckmarkBadge01Icon}
+                            className="h-4 w-4"
+                            strokeWidth={2}
+                          />
+                          <span className="text-xs uppercase">Easy Apply</span>
+                        </div>
+                        <span className="text-[1rem] text-blue-600">
+                          Available
+                        </span>
+                      </div>
+                    )}
+                    {(job.hiringTeamFirstName || job.hiringTeamLastName) && (
+                      <div className="col-span-2 flex flex-col gap-1.5 md:col-span-1">
+                        <div className="text-muted-foreground flex gap-1.5">
+                          <HugeiconsIcon
+                            icon={UserIcon}
+                            className="h-4 w-4"
+                            strokeWidth={2}
+                          />
+                          <span className="text-xs uppercase">Hiring Team</span>
+                        </div>
+                        <div className="flex items-center gap-1">
+                          <span className="text-[1rem]">
+                            {job.hiringTeamFirstName} {job.hiringTeamLastName}
+                          </span>
+                          {job.hiringTeamLinkedinUrl && (
+                            <a
+                              href={job.hiringTeamLinkedinUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-primary hover:text-primary/80"
+                            >
+                              <HugeiconsIcon
+                                icon={Linkedin02FreeIcons}
+                                className="h-4 w-4"
+                                strokeWidth={2}
+                              />
+                            </a>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
-                </div>
+
+                  {job.parsedDescription.jobSummary && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold tracking-wider uppercase">
+                        Job Summary
+                      </h3>
+                      <p className="text-sm leading-relaxed font-medium">
+                        {job.parsedDescription.jobSummary}
+                      </p>
+                    </div>
+                  )}
+
+                  {job.parsedDescription.keyResponsibilities.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold tracking-wider uppercase">
+                        Key Responsibilities
+                      </h3>
+                      <ol className="marker:text-muted-foreground text-muted-foreground list-decimal space-y-3 pl-5 text-sm leading-relaxed marker:font-semibold">
+                        {" "}
+                        {job.parsedDescription.keyResponsibilities.map(
+                          (r, i) => (
+                            <li key={i} className="pl-1">
+                              {" "}
+                              <span className="text-foreground font-medium">
+                                {" "}
+                                {r}{" "}
+                              </span>{" "}
+                            </li>
+                          ),
+                        )}{" "}
+                      </ol>
+                    </div>
+                  )}
+                  {job.parsedDescription.interviewProcess && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold tracking-wider uppercase">
+                        Interview Process
+                      </h3>
+                      <p className="text-sm leading-relaxed">
+                        {job.parsedDescription.interviewProcess}
+                      </p>
+                    </div>
+                  )}
+                </TabsContent>
               )}
-            </div>
+
+              {/* Requirements Tab */}
+              {job.parsedDescription && (
+                <TabsContent value="requirements" className="space-y-8">
+                  {mustHaveSkills.length > 0 && (
+                    <div className="space-y-5">
+                      <h3 className="text-sm font-bold tracking-wider uppercase">
+                        Must-Have Skills
+                      </h3>
+                      <ol className="marker:text-muted-foreground list-decimal space-y-4 pl-5 text-sm leading-relaxed marker:font-semibold">
+                        {matchedSkills.length > 0 && (
+                          <li className="text-muted-foreground pl-1">
+                            <span className="text-foreground mb-2 block font-medium">
+                              Skills you already have:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {matchedSkills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="flex items-center gap-1.5 rounded-md border border-emerald-300 bg-emerald-50 px-2.5 py-1.5 text-xs font-semibold text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-400"
+                                >
+                                  <HugeiconsIcon
+                                    icon={CheckmarkBadge01Icon}
+                                    className="h-5 w-5"
+                                    strokeWidth={2}
+                                  />
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </li>
+                        )}
+                        {missingSkills.length > 0 && (
+                          <li className="text-muted-foreground mt-2 pl-1">
+                            <span className="text-foreground mb-2 block font-medium">
+                              Consider showcasing the below skills in your
+                              resume:
+                            </span>
+                            <div className="flex flex-wrap gap-2">
+                              {missingSkills.map((skill) => (
+                                <span
+                                  key={skill}
+                                  className="flex items-center gap-1.5 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs font-semibold text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-400"
+                                >
+                                  <HugeiconsIcon
+                                    icon={Close}
+                                    className="h-5 w-5"
+                                    strokeWidth={2}
+                                  />
+                                  {skill}
+                                </span>
+                              ))}
+                            </div>
+                          </li>
+                        )}
+                      </ol>
+                    </div>
+                  )}
+
+                  {niceToHaveSkills.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-bold tracking-wider uppercase">
+                        Nice-to-Have Skills
+                      </h3>
+                      <ol className="marker:text-muted-foreground text-muted-foreground list-decimal space-y-2 pl-5 text-sm leading-relaxed marker:font-semibold">
+                        {niceToHaveSkills.map((skill, i) => (
+                          <li key={i} className="pl-1">
+                            <span className="text-foreground font-medium">
+                              {skill}
+                            </span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  )}
+                </TabsContent>
+              )}
+
+              {/* Benefits Tab */}
+              {job.parsedDescription && (
+                <TabsContent value="benefits" className="space-y-6">
+                  <h3 className="text-sm font-bold tracking-wider uppercase">
+                    Benefits & Perks
+                  </h3>
+                  {job.parsedDescription.benefits.length > 0 ? (
+                    <ol className="marker:text-muted-foreground text-muted-foreground list-decimal space-y-3 pl-5 text-sm leading-relaxed marker:font-semibold">
+                      {job.parsedDescription.benefits.map((b, i) => (
+                        <li key={i} className="pl-1">
+                          <span className="text-foreground font-medium">
+                            {b}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p className="text-muted-foreground text-sm italic">
+                      No specific benefits were extracted from the description.
+                    </p>
+                  )}
+                </TabsContent>
+              )}
+
+              {/* Full Description Tab */}
+              <TabsContent value="description">
+                <div className="prose prose-sm dark:prose-invert prose-headings:font-bold prose-headings:text-foreground prose-h1:text-lg prose-h2:text-base prose-h3:text-base prose-p:text-muted-foreground prose-p:leading-relaxed prose-li:text-muted-foreground prose-li:marker:text-muted-foreground max-w-none whitespace-pre-wrap">
+                  <ReactMarkdown
+                    components={{
+                      h1: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-8 mb-3 block text-lg font-bold"
+                          {...props}
+                        />
+                      ),
+                      h2: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-6 mb-3 block text-base font-bold"
+                          {...props}
+                        />
+                      ),
+                      h3: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-5 mb-2 block text-base font-bold"
+                          {...props}
+                        />
+                      ),
+                      h4: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-4 mb-2 block font-semibold"
+                          {...props}
+                        />
+                      ),
+                      h5: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-4 mb-2 block font-semibold"
+                          {...props}
+                        />
+                      ),
+                      h6: ({ ...props }) => (
+                        <strong
+                          className="text-foreground mt-4 mb-2 block font-semibold"
+                          {...props}
+                        />
+                      ),
+                      a: ({ ...props }) => (
+                        <a
+                          className="text-primary font-medium hover:underline"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          {...props}
+                        />
+                      ),
+                      ul: ({ ...props }) => (
+                        <ul
+                          className="mb-4 list-disc space-y-1 pl-5"
+                          {...props}
+                        />
+                      ),
+                      ol: ({ ...props }) => (
+                        <ol
+                          className="mb-4 list-decimal space-y-1 pl-5"
+                          {...props}
+                        />
+                      ),
+                      p: ({ ...props }) => <p className="mb-4" {...props} />,
+                    }}
+                  >
+                    {job.description || "No description provided."}
+                  </ReactMarkdown>
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
+        </div>
+
+        {/* Sidebar */}
+        <div className="space-y-6 md:col-span-1">
           <div className="bg-card rounded-md border p-6">
-            <h3 className="text-muted-foreground mb-4 text-xs font-bold tracking-wider uppercase">
-              Your Match Profile
+            <h3 className="mb-4 text-sm font-bold tracking-wider uppercase">
+              Match Profile
             </h3>
 
-            <div className="mb-6 flex w-full flex-col items-center rounded-md border border-emerald-500/20 bg-emerald-500/5 p-8 dark:border-emerald-500/10 dark:bg-emerald-500/5">
+            <div
+              className={`flex w-full flex-col items-center rounded-md border ${score <= 60 ? "border-red-500/20 bg-red-500/5 dark:border-red-500/10 dark:bg-red-500/5" : score <= 80 ? "border-yellow-500/20 bg-yellow-500/5 dark:border-yellow-500/10 dark:bg-yellow-500/5" : "border-emerald-500/20 bg-emerald-500/5 dark:border-emerald-500/10 dark:bg-emerald-500/5"} p-8`}
+            >
               <div className="relative mb-4 h-32 w-32">
                 <svg className="h-full w-full" viewBox="0 0 36 36">
                   <path
-                    className="text-emerald-500/10 dark:text-emerald-500/20"
+                    className={`${score <= 60 ? "text-red-500/20 dark:text-red-500/20" : score <= 80 ? "text-yellow-500/20 dark:text-yellow-500/20" : "text-emerald-500/20 dark:text-emerald-500/20"}`}
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
                     stroke="currentColor"
                     strokeWidth="3.5"
                   />
                   <path
-                    className="text-emerald-500 shadow-sm"
+                    className={`${score <= 60 ? "text-red-500 shadow-sm" : score <= 80 ? "text-yellow-500 shadow-sm" : "text-emerald-500 shadow-sm"}`}
                     strokeDasharray={`${score}, 100`}
                     d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
                     fill="none"
@@ -701,12 +893,16 @@ export default function JobDetailPage() {
                   />
                 </svg>
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
-                  <span className="text-3xl font-bold text-emerald-600 dark:text-emerald-400">
+                  <span
+                    className={`${score <= 60 ? "text-red-500" : score <= 80 ? "text-yellow-500" : "text-emerald-500"} text-3xl font-bold`}
+                  >
                     {score}%
                   </span>
                 </div>
               </div>
-              <p className="text-sm font-bold tracking-wide text-emerald-600 uppercase dark:text-emerald-400">
+              <p
+                className={`${score <= 60 ? "text-red-500" : score <= 80 ? "text-yellow-500" : "text-emerald-500"} text-sm font-bold tracking-wide uppercase`}
+              >
                 {score >= 80
                   ? "Strong Match"
                   : score >= 60
@@ -714,32 +910,14 @@ export default function JobDetailPage() {
                     : "Fair Match"}
               </p>
             </div>
-
-            {matchReasonsList.length > 0 && (
-              <div className="space-y-4 pt-2">
-                <h4 className="text-sm font-semibold">Match Reasons</h4>
-                <ul className="space-y-3">
-                  {matchReasonsList.map((reason: string, idx: number) => (
-                    <li
-                      key={idx}
-                      className="text-muted-foreground flex items-start gap-3 text-sm leading-relaxed"
-                    >
-                      <HugeiconsIcon
-                        icon={Tick01Icon}
-                        className="mt-0.5 h-4.5 w-4.5 shrink-0 text-emerald-500"
-                        strokeWidth={2}
-                      />
-                      <span>{reason}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            )}
           </div>
+
           <div className="bg-card rounded-md border p-6">
-            <h2 className="mb-4 text-xl font-semibold">About {job.company}</h2>
+            <h3 className="mb-4 text-sm font-bold tracking-wider uppercase">
+              About {job.company}
+            </h3>
             {job.companyDescription ? (
-              <p className="text-muted-foreground mb-6 text-sm leading-relaxed">
+              <p className="mb-6 text-sm leading-relaxed">
                 {job.companyDescription}
               </p>
             ) : (
@@ -748,53 +926,67 @@ export default function JobDetailPage() {
               </p>
             )}
 
-            <div className="mb-6 grid grid-cols-1 gap-4 text-sm sm:grid-cols-2">
+            <div className="grid grid-cols-1 gap-4 text-sm font-semibold sm:grid-cols-2">
+              {job.location && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs uppercase">
+                    Location
+                  </span>
+                  <span>{job.location}</span>
+                </div>
+              )}
+              {job.companyEmployeeCount && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs uppercase">
+                    Employees
+                  </span>
+                  <span>{job.companyEmployeeCount}+</span>
+                </div>
+              )}
               {job.companyFoundedYear && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-xs font-medium uppercase">
+                  <span className="text-muted-foreground text-xs uppercase">
                     Founded
                   </span>
-                  <span className="font-semibold">
-                    {job.companyFoundedYear}
+                  <span>{job.companyFoundedYear}</span>
+                </div>
+              )}
+              {job.companyDomain && (
+                <div className="flex flex-col gap-1">
+                  <span className="text-muted-foreground text-xs uppercase">
+                    Website
                   </span>
+                  <a
+                    href={companyUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-primary inline-flex items-center gap-1 hover:underline"
+                  >
+                    Visit Site
+                  </a>
                 </div>
               )}
               {job.companyLinkedinUrl && (
                 <div className="flex flex-col gap-1">
-                  <span className="text-muted-foreground text-xs font-medium uppercase">
+                  <span className="text-muted-foreground text-xs uppercase">
                     LinkedIn
                   </span>
                   <a
                     href={job.companyLinkedinUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="text-primary inline-flex items-center gap-1 font-medium hover:underline"
+                    className="text-primary inline-flex items-center gap-1 hover:underline"
                   >
-                    <HugeiconsIcon icon={Linkedin01Icon} className="h-4 w-4" />{" "}
+                    <HugeiconsIcon
+                      icon={Linkedin01Icon}
+                      className="h-4 w-4"
+                      strokeWidth={2}
+                    />{" "}
                     Follow
                   </a>
                 </div>
               )}
             </div>
-
-            {job.companyTechnologySlugs &&
-              job.companyTechnologySlugs.length > 0 && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold">
-                    Company Tech Stack
-                  </h3>
-                  <div className="flex flex-wrap gap-2">
-                    {job.companyTechnologySlugs.map((tech) => (
-                      <span
-                        key={tech}
-                        className="bg-muted text-muted-foreground rounded-md px-2 py-0.5 text-xs font-medium capitalize"
-                      >
-                        {tech.replace(/-/g, " ")}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
           </div>
         </div>
       </div>

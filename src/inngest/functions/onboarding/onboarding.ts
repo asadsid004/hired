@@ -154,6 +154,14 @@ export const processOnboarding = inngest.createFunction(
             }).where(eq(user.id, resume.userId));
         });
 
+        // Parse job descriptions in the background using Gemma 4
+        await step.sendEvent("parse-job-descriptions", {
+            name: "hired/jobs.parse",
+            data: {
+                userId: resume.userId,
+            },
+        });
+
         await step.run("update-status-finished", async () => {
             await db.update(user).set({
                 onboardingCompleted: true,

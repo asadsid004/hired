@@ -3,6 +3,7 @@ import { authMiddleware } from '@/server/middleware/auth';
 import { db } from '@/db/drizzle';
 import { userJobs, jobs } from '@/db/schema/jobs-schema';
 import { resume } from '@/db/schema/resume-schema';
+import { user as userTable } from '@/db/schema/auth-schema';
 import { desc, eq, and, getTableColumns } from 'drizzle-orm';
 
 // 
@@ -31,6 +32,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
                     maxAnnualSalaryUsd: jobs.maxAnnualSalaryUsd,
                     seniority: jobs.seniority,
                     employmentStatuses: jobs.employmentStatuses,
+                    parsedDescription: jobs.parsedDescription,
                 },
                 tailoredResumeId: resume.id,
             })
@@ -57,6 +59,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
                 userJob: userJobs,
                 job: jobColumnsWithoutEmbedding,
                 tailoredResumeId: resume.id,
+                userProfile: userTable.profile,
             })
             .from(userJobs)
             .innerJoin(jobs, eq(userJobs.jobId, jobs.id))
@@ -64,6 +67,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
                 eq(resume.jobId, jobs.id),
                 eq(resume.userId, user.id)
             ))
+            .innerJoin(userTable, eq(userTable.id, userJobs.userId))
             .where(
                 and(
                     eq(userJobs.jobId, parseInt(params.id)),
@@ -80,6 +84,7 @@ export const jobsRoutes = new Elysia({ prefix: '/jobs' })
             ...row.job,
             userJobRecord: row.userJob,
             tailoredResumeId: row.tailoredResumeId,
+            userSkills: row.userProfile?.skills ?? null,
         };
     }, {
         auth: true,

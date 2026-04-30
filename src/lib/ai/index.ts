@@ -1,3 +1,5 @@
+import { groq } from '@ai-sdk/groq';
+import { cerebras } from '@ai-sdk/cerebras';
 import { google } from '@ai-sdk/google';
 import type { LanguageModel } from 'ai';
 
@@ -8,7 +10,11 @@ export const models = {
 
     complex: google('gemini-2.5-pro'),
 
-    standard_2: google('gemma-4-31b-it')
+    standard_2: google('gemma-4-31b-it'),
+
+    standard_3: groq('openai/gpt-oss-120b'),
+
+    standard_4: cerebras('qwen-3-235b-a22b-instruct-2507'),
 } as const;
 
 export type ModelPreset = keyof typeof models;

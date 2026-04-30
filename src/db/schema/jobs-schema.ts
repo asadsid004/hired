@@ -52,6 +52,7 @@ export const jobs = pgTable('jobs', {
     discoveredAt: timestamp('discovered_at'),
 
     preferenceHashes: jsonb('preference_hashes').$type<string[]>().default([]).notNull(),
+    parsedDescription: jsonb('parsed_description'),
 
     createdAt: timestamp("created_at").defaultNow().notNull(),
     updatedAt: timestamp("updated_at")

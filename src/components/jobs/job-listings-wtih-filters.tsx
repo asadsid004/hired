@@ -119,11 +119,22 @@ export const JobListingWithFilers = () => {
           />
         </div>
       </div>
-
       <div className="grid gap-4">
         {filteredJobs.length === 0 ? (
-          <div className="text-muted-foreground rounded-md border border-dashed py-12 text-center">
-            No jobs found.
+          <div className="text-muted-foreground flex flex-col items-center gap-3 rounded-md border border-dashed py-16 text-center">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              className="h-8 w-8 opacity-40"
+              strokeWidth={1.5}
+            />
+            <div>
+              <p className="font-medium">No jobs found</p>
+              <p className="mt-1 text-xs opacity-70">
+                {search.trim()
+                  ? "Try adjusting your search terms"
+                  : "Check back later for new matches"}
+              </p>
+            </div>
           </div>
         ) : (
           filteredJobs.map((job) => (
