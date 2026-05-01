@@ -1,7 +1,7 @@
-import { Logout } from "@/components/auth/logout-button";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { DashboardView } from "@/components/dashboard/dashboard-view";
 
 const DashboardPage = async () => {
   const session = await auth.api.getSession({
@@ -20,9 +20,8 @@ const DashboardPage = async () => {
   }
 
   return (
-    <div className="flex items-center justify-between p-4">
-      Dashboard
-      <Logout />
+    <div className="py-6">
+      <DashboardView />
     </div>
   );
 };

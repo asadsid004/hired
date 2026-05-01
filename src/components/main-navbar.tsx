@@ -8,6 +8,7 @@ import { ThemeToggle } from "./theme/theme-toggle";
 import { Logout } from "./auth/logout-button";
 
 const NavItems = [
+  { label: "Dashboard", href: "/dashboard" },
   { label: "Jobs", href: "/jobs" },
   { label: "Resume", href: "/resume" },
   { label: "Practice", href: "/practice" },

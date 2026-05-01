@@ -55,7 +55,13 @@ export type JobData = {
   };
 };
 
-export const JobCard = ({ job }: { job: JobData }) => {
+export const JobCard = ({
+  job,
+  compact = false,
+}: {
+  job: JobData;
+  compact?: boolean;
+}) => {
   const queryClient = useQueryClient();
   const router = useRouter();
 
@@ -272,11 +278,12 @@ export const JobCard = ({ job }: { job: JobData }) => {
   return (
     <div
       className={cn(
-        "bg-card flex flex-col gap-6 rounded-md border border-l-[3px] p-5 transition-all hover:shadow-md md:flex-row",
+        "bg-card flex flex-col gap-6 rounded-md border border-l-[3px] p-5 transition-all hover:shadow-md",
+        compact ? "flex-col" : "md:flex-row",
         scoreColor,
       )}
     >
-      <div className="flex-1 space-y-4">
+      <div className={cn("space-y-4", compact ? "w-full" : "flex-1")}>
         <div className="flex items-start gap-4">
           <div className="flex h-21 w-21 shrink-0 items-center justify-center overflow-hidden rounded-md border bg-white">
             {job.companyLogo ? (
@@ -315,56 +322,73 @@ export const JobCard = ({ job }: { job: JobData }) => {
               {job.companyIndustry && <span>{job.companyIndustry}</span>}
             </p>
           </div>
+          {compact && (
+            <div className="ml-auto flex shrink-0 items-center">
+              <span
+                className={cn(
+                  "rounded-md border px-2.5 py-1 text-xs font-semibold",
+                  scoreBgColor,
+                  borderColor,
+                  strokeColor,
+                )}
+              >
+                <span className="block text-xl">{score}%</span>
+                <span>Match</span>
+              </span>
+            </div>
+          )}
         </div>
 
         {/* Details Grid */}
-        <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
-          <div className="text-muted-foreground flex items-center gap-2">
-            <HugeiconsIcon
-              icon={Location01Icon}
-              strokeWidth={2}
-              className="h-4 w-4"
-            />
-            <span className="truncate">
-              {job.location || "Location not provided"}
-            </span>
+        {!compact && (
+          <div className="grid grid-cols-1 gap-x-6 gap-y-3 text-sm sm:grid-cols-2 lg:grid-cols-3">
+            <div className="text-muted-foreground flex items-center gap-2">
+              <HugeiconsIcon
+                icon={Location01Icon}
+                strokeWidth={2}
+                className="h-4 w-4"
+              />
+              <span className="truncate">
+                {job.location || "Location not provided"}
+              </span>
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2">
+              <HugeiconsIcon
+                icon={Money01Icon}
+                strokeWidth={2}
+                className="h-4 w-4"
+              />
+              <span className="truncate">{formattedSalary}</span>
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2">
+              <HugeiconsIcon
+                icon={UserEdit01Icon}
+                strokeWidth={2}
+                className="h-4 w-4"
+              />
+              <span>{getSeniority()}</span>
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2">
+              <HugeiconsIcon
+                icon={Clock01Icon}
+                strokeWidth={2}
+                className="h-4 w-4"
+              />
+              <span>{getEmploymentType()}</span>
+            </div>
+            <div className="text-muted-foreground flex items-center gap-2">
+              <HugeiconsIcon
+                icon={Briefcase02Icon}
+                strokeWidth={2}
+                className="h-4 w-4"
+              />
+              <span>{getWorkMode()}</span>
+            </div>
           </div>
-          <div className="text-muted-foreground flex items-center gap-2">
-            <HugeiconsIcon
-              icon={Money01Icon}
-              strokeWidth={2}
-              className="h-4 w-4"
-            />
-            <span className="truncate">{formattedSalary}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2">
-            <HugeiconsIcon
-              icon={UserEdit01Icon}
-              strokeWidth={2}
-              className="h-4 w-4"
-            />
-            <span>{getSeniority()}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2">
-            <HugeiconsIcon
-              icon={Clock01Icon}
-              strokeWidth={2}
-              className="h-4 w-4"
-            />
-            <span>{getEmploymentType()}</span>
-          </div>
-          <div className="text-muted-foreground flex items-center gap-2">
-            <HugeiconsIcon
-              icon={Briefcase02Icon}
-              strokeWidth={2}
-              className="h-4 w-4"
-            />
-            <span>{getWorkMode()}</span>
-          </div>
-        </div>
+        )}
 
         {/* Tech Stack Pills */}
-        {techPills.length > 0 && (
+        {!compact && techPills.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5">
             <span className="text-muted-foreground text-sm font-medium">
               Technologies:
@@ -387,45 +411,59 @@ export const JobCard = ({ job }: { job: JobData }) => {
       </div>
 
       {/* Right side: Score & Actions */}
-      <div className="flex shrink-0 flex-col items-center justify-between space-y-4 border-t pt-4 sm:items-end md:w-56 md:border-t-0 md:border-l md:pt-0 md:pl-6">
-        <div
-          className={`flex h-full w-full flex-col items-center justify-center rounded-md ${scoreBgColor} border ${borderColor} `}
-        >
-          <div className="relative h-18 w-18">
-            <svg className="h-full w-full" viewBox="0 0 36 36">
-              <path
-                className={`${strokeSecondaryColor}`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3"
-              />
-              <path
-                className={strokeColor}
-                strokeDasharray={`${score}, 100`}
-                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="3.3"
-                strokeLinecap="round"
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className={`text-lg font-semibold ${strokeColor}`}>
-                {score}%
-              </span>
+      <div
+        className={cn(
+          "flex shrink-0 flex-col items-center justify-between border-t",
+          compact
+            ? "border-border/50 w-full flex-row items-center space-y-4 border-t pt-4"
+            : "space-y-4 pt-4 sm:items-end md:w-56 md:border-t-0 md:border-l md:pt-0 md:pl-6",
+        )}
+      >
+        {!compact && (
+          <div
+            className={`flex h-full w-full flex-col items-center justify-center rounded-md ${scoreBgColor} border ${borderColor} `}
+          >
+            <div className="relative h-18 w-18">
+              <svg className="h-full w-full" viewBox="0 0 36 36">
+                <path
+                  className={`${strokeSecondaryColor}`}
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3"
+                />
+                <path
+                  className={strokeColor}
+                  strokeDasharray={`${score}, 100`}
+                  d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="3.3"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <div className="absolute inset-0 flex items-center justify-center">
+                <span className={`text-lg font-semibold ${strokeColor}`}>
+                  {score}%
+                </span>
+              </div>
             </div>
+            <p className={`text-sm font-semibold uppercase ${strokeColor}`}>
+              {score >= 80
+                ? "Strong Match"
+                : score >= 60
+                  ? "Good Match"
+                  : "Fair Match"}
+            </p>
           </div>
-          <p className={`text-sm font-semibold uppercase ${strokeColor}`}>
-            {score >= 80
-              ? "Strong Match"
-              : score >= 60
-                ? "Good Match"
-                : "Fair Match"}
-          </p>
-        </div>
+        )}
         {/* Action Buttons */}
-        <div className="mt-auto flex w-full items-center gap-2">
+        <div
+          className={cn(
+            "flex w-full items-center gap-2",
+            compact ? "mt-0" : "mt-auto",
+          )}
+        >
           {isApplied ? (
             <Button
               variant="outline"

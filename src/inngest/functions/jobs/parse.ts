@@ -49,11 +49,12 @@ export const parseJobDescriptions = inngest.createFunction(
         // 2. Process each job individually
         // Using separate steps ensures that if the function times out, 
         // it resumes from the exact job it failed on.
-        const modelPresets: ModelPreset[] = ["standard_3", "standard_5", "standard_4", "standard_6"];
+        const modelPresets: ModelPreset[] = ["standard_3", "standard_5", "standard_4", "standard_3", "standard_6"];
 
         for (let i = 0; i < unparsedJobs.length; i++) {
             const job = unparsedJobs[i];
-            const preset = modelPresets[Math.floor(i / 4) % modelPresets.length];
+            // Round robin to distribute load across models
+            const preset = modelPresets[i % modelPresets.length];
 
             await step.run(`parse-job-${job.id}`, async () => {
                 try {
