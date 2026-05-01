@@ -86,7 +86,7 @@ const SpecificInterviewPage = () => {
         colorClass: "text-emerald-500",
         bgClass: "bg-emerald-500",
         trackClass: "bg-emerald-500/15",
-        borderClass: "border-emerald-500/20",
+        borderClass: "border-emerald-500/50",
         glowClass: "bg-emerald-500/10",
       },
       {
@@ -95,7 +95,7 @@ const SpecificInterviewPage = () => {
         colorClass: "text-sky-500",
         bgClass: "bg-sky-500",
         trackClass: "bg-sky-500/15",
-        borderClass: "border-sky-500/20",
+        borderClass: "border-sky-500/50",
         glowClass: "bg-sky-500/10",
       },
       {
@@ -104,7 +104,7 @@ const SpecificInterviewPage = () => {
         colorClass: "text-violet-500",
         bgClass: "bg-violet-500",
         trackClass: "bg-violet-500/15",
-        borderClass: "border-violet-500/20",
+        borderClass: "border-violet-500/50",
         glowClass: "bg-violet-500/10",
       },
     ];
@@ -150,9 +150,9 @@ const SpecificInterviewPage = () => {
                   className={`bg-card relative overflow-hidden rounded-lg border ${s.borderClass} flex flex-col gap-4 p-6`}
                 >
                   {/* Ambient glow */}
-                  <div
+                  {/* <div
                     className={`pointer-events-none absolute -top-6 -right-6 h-28 w-28 rounded-full ${s.glowClass} blur-2xl`}
-                  />
+                  /> */}
 
                   <p
                     className={`text-xs font-bold tracking-[0.2em] uppercase ${s.colorClass}`}
@@ -174,7 +174,7 @@ const SpecificInterviewPage = () => {
                   </div>
 
                   {/* Progress bar */}
-                  <div className={`h-1 w-full rounded-full ${s.trackClass}`}>
+                  <div className={`h-2 w-full rounded-full ${s.trackClass}`}>
                     <div
                       className={`h-full rounded-full ${s.bgClass}`}
                       style={{ width: `${s.value}%` }}

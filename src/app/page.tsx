@@ -52,10 +52,9 @@ export default function Home() {
   return (
     <main className="relative flex min-h-svh flex-col">
       <Navbar />
-
       {/* ── Hero ── */}
       <section className="relative px-6 pt-16 pb-0 md:pt-24">
-        <div className="mx-auto max-w-7xl">
+        <div className="z-50 mx-auto max-w-7xl">
           {/* Top line: tagline + description side by side */}
           <div className="grid grid-cols-1 gap-8 md:grid-cols-2 md:items-end md:gap-12">
             <div>
@@ -92,19 +91,26 @@ export default function Home() {
           </div>
 
           {/* Hero image - full width editorial image */}
-          <div className="mt-14 overflow-hidden rounded-2xl md:mt-20">
+          <div className="border-primary mt-14 overflow-hidden rounded-2xl border-2 md:mt-20">
             <div className="relative aspect-21/9 w-full">
               <Image
-                src="https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2940&auto=format&fit=crop"
+                src="/dark-image.png"
                 alt="Modern workspace"
-                fill
+                width={1920}
+                height={1080}
                 priority
-                className="object-cover"
+                className="hidden object-cover dark:block"
                 sizes="(max-width: 768px) 100vw, 1280px"
               />
-              {/* Subtle overlay */}
-              <div className="absolute inset-0 bg-linear-to-t from-black/30 via-transparent to-transparent" />
-              {/* Bottom-left info chip */}
+              <Image
+                src="/light-image.png"
+                alt="Modern workspace"
+                width={1920}
+                height={1080}
+                priority
+                className="object-cover dark:hidden"
+                sizes="(max-width: 768px) 100vw, 1280px"
+              />
               <div className="absolute bottom-6 left-6 flex items-center gap-3">
                 <span className="rounded-full bg-white/90 px-4 py-2 text-xs font-medium tracking-wide text-black backdrop-blur-sm dark:bg-white/90 dark:text-black">
                   YOUR CAREER, REIMAGINED
